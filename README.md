@@ -15,7 +15,7 @@
 
 2. 【启用Pages】在仓库的`Settings`中`Pages->Build and deployment->Source`下面选择`Github Actions`。
 
-3. 【开始写作】打开一篇issue，开始写作，并且**必须**添加一个`标签Label`（至少添加一个），再保存issue后会自动创建博客内容，片刻后可通过https://XXX.github.io 访问。
+3. 【开始写作】打开一篇issue，开始写作，并且**必须**添加一个`标签Label`（至少添加一个），再保存issue后会自动创建博客内容，片刻后可通过https://XXX.github.io 访问（可进入Actions页面查看构建进度）。
 
 4. 【手动全局生成】这个步骤只有在修改`config.json`文件或者出现奇怪问题的时候，需要执行。
 ```
@@ -34,6 +34,12 @@
 - 评论系统引入[utteranc.es](https://utteranc.es/)
 - 使用`jinja2`对html进行渲染，可通过模板自定义UI主题
 
+### 赞赏
+
+如果本项目对你有帮助，可以用微信赞赏一下作者，让项目有继续更新维护下去的动力，谢谢！
+
+![赞赏码](img/赞赏码.jpg)
+
 ### 鸣谢
 - [jinja2](https://jinja.palletsprojects.com/)
 - [utteranc.es](https://utteranc.es/)
@@ -43,3 +49,4 @@
 ### License
 
 请保留页面底部和console界面版权信息，谢谢！
+

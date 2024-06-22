@@ -1,7 +1,12 @@
 {% extends 'base.html' %}
 
 {% block head %}
-<meta name="description" content="{{ blogBase['postTitle'] }}">
+<meta name="description" content="{{ blogBase['description'] }}">
+<meta property="og:title" content="{{ blogBase['postTitle'] }}">
+<meta property="og:description" content="{{ blogBase['description'] }}">
+<meta property="og:type" content="article">
+<meta property="og:url" content="{{ blogBase['postUrl'] }}">
+<meta property="og:image" content="{{ blogBase['ogImage'] }}">
 <title>{{ blogBase['postTitle'] }}</title>
 {% if blogBase['highlight']==1 %}<link href="//unpkg.com/@wooorm/starry-night@2.1.1/style/both.css" rel="stylesheet" />{% endif %}
 {% endblock %}
@@ -27,26 +32,24 @@
 {% block header %}
 <h1 class="postTitle">{{ blogBase['postTitle'] }}</h1>
 <div class="title-right">
-    
-    <a href="{{ blogBase['homeUrl'] }}"><button id="buttonHome" class="btn btn-invisible circle" title="{{ i18n['home'] }}">
+    <a href="{{ blogBase['homeUrl'] }}" id="buttonHome" class="btn btn-invisible circle" title="{{ i18n['home'] }}">
         <svg class="octicon" width="16" height="16">
             <path id="pathHome" fill-rule="evenodd"></path>
         </svg>
-    </button></a>
-
+    </a>
     {% if blogBase['showPostSource']==1 %}
-    <a href="{{ blogBase['postSourceUrl'] }}" target="_blank"><button class="btn btn-invisible circle" title="Issue">
+    <a href="{{ blogBase['postSourceUrl'] }}" target="_blank" class="btn btn-invisible circle" title="Issue">
         <svg class="octicon" width="16" height="16">
             <path id="pathIssue" fill-rule="evenodd"></path>
         </svg>
-    </button></a>
+    </a>
     {% endif %}
 
-    <button class="btn btn-invisible circle" onclick="modeSwitch();" title="{{ i18n['switchTheme'] }}" {%- if blogBase['themeMode']=='fix' -%}style="display:none;"{%- endif -%}>
+    <a class="btn btn-invisible circle" onclick="modeSwitch();" title="{{ i18n['switchTheme'] }}" {%- if blogBase['themeMode']=='fix' -%}style="display:none;"{%- endif -%}>
         <svg class="octicon" width="16" height="16" >
             <path id="themeSwitch" fill-rule="evenodd"></path>
         </svg>
-    </button>
+    </a>
 
 </div>
 {% endblock %}
@@ -107,5 +110,5 @@ function iFrameLoading(){
     }
 }
 </script>
-
+{{ blogBase['script'] }}
 {% endblock %}

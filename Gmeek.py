@@ -8,6 +8,7 @@ import shutil
 import urllib
 import requests
 import argparse
+import html
 from github import Github
 from xpinyin import Pinyin
 from feedgen.feed import FeedGenerator
@@ -72,7 +73,7 @@ class GMEEK():
         os.mkdir(self.post_dir)
 
     def defaultConfig(self):
-        dconfig={"singlePage":[],"startSite":"","filingNum":"","onePageListNum":15,"commentLabelColor":"#006b75","yearColorList":["#bc4c00", "#0969da", "#1f883d", "#A333D0"],"i18n":"CN","themeMode":"manual","dayTheme":"light","nightTheme":"dark","urlMode":"pinyin","script":"","style":"","bottomText":"","showPostSource":1,"iconList":{},"UTC":+8,"rssSplit":"sentence"}
+        dconfig={"singlePage":[],"startSite":"","filingNum":"","onePageListNum":15,"commentLabelColor":"#006b75","yearColorList":["#bc4c00", "#0969da", "#1f883d", "#A333D0"],"i18n":"CN","themeMode":"manual","dayTheme":"light","nightTheme":"dark","urlMode":"pinyin","script":"","style":"","indexScript":"","indexStyle":"","bottomText":"","showPostSource":1,"iconList":{},"UTC":+8,"rssSplit":"sentence","exlink":{}}
         config=json.loads(open('config.json', 'r', encoding='utf-8').read())
         self.blogBase={**dconfig,**config}.copy()
         self.blogBase["postListJson"]=json.loads('{}')
@@ -84,8 +85,11 @@ class GMEEK():
         if "faviconUrl" not in self.blogBase:
             self.blogBase["faviconUrl"]=self.blogBase["avatarUrl"]
 
+        if "ogImage" not in self.blogBase:
+            self.blogBase["ogImage"]=self.blogBase["avatarUrl"]
+
         if "homeUrl" not in self.blogBase:
-            if str(self.repo.name) == (str(self.repo.owner.login)+".github.io"):
+            if str(self.repo.name).lower() == (str(self.repo.owner.login) + ".github.io").lower():
                 self.blogBase["homeUrl"] = f"https://{self.repo.name}"
             else:
                 self.blogBase["homeUrl"] = f"https://{self.repo.owner.login}.github.io/{self.repo.name}"
@@ -134,8 +138,34 @@ class GMEEK():
             post_body=re.sub(r'<math-renderer.*?>','',post_body)
             post_body=re.sub(r'</math-renderer>','',post_body)
             issue["script"]=issue["script"]+'<script>MathJax = {tex: {inlineMath: [["$", "$"]]}};</script><script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>'
+        
+        if '<p class="markdown-alert-title">' in post_body:
+            issue["style"]=issue["style"]+'<style>.markdown-alert{padding:0.5rem 1rem;margin-bottom:1rem;border-left:.25em solid var(--borderColor-default,var(--color-border-default));}.markdown-alert .markdown-alert-title {display:flex;font-weight:var(--base-text-weight-medium,500);align-items:center;line-height:1;}.markdown-alert>:first-child {margin-top:0;}.markdown-alert>:last-child {margin-bottom:0;}</style>'
+            alerts = {
+                'note': 'accent',
+                'tip': 'success',
+                'important': 'done',
+                'warning': 'attention',
+                'caution': 'danger'
+            }
+
+            for alert, style in alerts.items():
+                if f'markdown-alert-{alert}' in post_body:
+                    issue["style"] += (
+                        f'<style>.markdown-alert.markdown-alert-{alert} {{'
+                        f'border-left-color:var(--borderColor-{style}-emphasis, var(--color-{style}-emphasis));'
+                        f'background-color:var(--color-{style}-subtle);}}'
+                        f'.markdown-alert.markdown-alert-{alert} .markdown-alert-title {{'
+                        f'color: var(--fgColor-{style},var(--color-{style}-fg));}}</style>'
+                    )
+
+        if '<code class="notranslate">Gmeek-html' in post_body:
+            post_body = re.sub(r'<code class="notranslate">Gmeek-html(.*?)</code>', lambda match: html.unescape(match.group(1)), post_body, flags=re.DOTALL)
 
         postBase["postTitle"]=issue["postTitle"]
+        postBase["postUrl"]=self.blogBase["homeUrl"]+"/"+issue["postUrl"]
+        postBase["description"]=issue["description"]
+        postBase["ogImage"]=issue["ogImage"]
         postBase["postBody"]=post_body
         postBase["commentNum"]=issue["commentNum"]
         postBase["style"]=issue["style"]
@@ -291,7 +321,7 @@ class GMEEK():
                         period="."
                 else:
                     period=self.blogBase["rssSplit"]
-                self.blogBase[listJsonName][postNum]["description"]=issue.body.split(period)[0]+period
+                self.blogBase[listJsonName][postNum]["description"]=issue.body.split(period)[0].replace("\"", "\'")+period
                 
             self.blogBase[listJsonName][postNum]["top"]=0
             for event in issue.get_events():
@@ -322,6 +352,10 @@ class GMEEK():
             else:
                 self.blogBase[listJsonName][postNum]["script"]=self.blogBase["script"]
 
+            if "ogImage" in postConfig:
+                self.blogBase[listJsonName][postNum]["ogImage"]=postConfig["ogImage"]
+            else:
+                self.blogBase[listJsonName][postNum]["ogImage"]=self.blogBase["ogImage"]
 
             thisTime=datetime.datetime.fromtimestamp(self.blogBase[listJsonName][postNum]["createdAt"])
             thisTime=thisTime.astimezone(self.TZ)
@@ -403,7 +437,10 @@ else:
     else:
         f=open("blogBase.json","r")
         print("blogBase is exists and issue_number!=0, runOne")
-        blog.blogBase=json.loads(f.read())
+        oldBlogBase=json.loads(f.read())
+        for key, value in oldBlogBase.items():
+            blog.blogBase[key] = value
+
         f.close()
         blog.runOne(options.issue_number)
 
@@ -423,6 +460,7 @@ for i in blog.blogBase["postListJson"]:
     del blog.blogBase["postListJson"][i]["script"]
     del blog.blogBase["postListJson"][i]["style"]
     del blog.blogBase["postListJson"][i]["top"]
+    del blog.blogBase["postListJson"][i]["ogImage"]
 
     if 'commentNum' in blog.blogBase["postListJson"][i]:
         commentNumSum=commentNumSum+blog.blogBase["postListJson"][i]["commentNum"]
@@ -442,7 +480,7 @@ if os.environ.get('GITHUB_EVENT_NAME')!='schedule':
     print("====== update readme file ======")
     workspace_path = os.environ.get('GITHUB_WORKSPACE')
     readme="# %s :link: %s \r\n" % (blog.blogBase["title"],blog.blogBase["homeUrl"])
-    readme=readme+"### :page_facing_up: [%d](%s/tag.html) \r\n" % (len(blog.blogBase["postListJson"]),blog.blogBase["homeUrl"])
+    readme=readme+"### :page_facing_up: [%d](%s/tag.html) \r\n" % (len(blog.blogBase["postListJson"])-1,blog.blogBase["homeUrl"])
     readme=readme+"### :speech_balloon: %d \r\n" % commentNumSum
     readme=readme+"### :hibiscus: %d \r\n" % wordCount
     readme=readme+"### :alarm_clock: %s \r\n" % datetime.datetime.now(blog.TZ).strftime('%Y-%m-%d %H:%M:%S')

@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
 {% block head %}
 <meta name="description" content="{{ blogBase['subTitle'] }}">
+<meta property="og:title" content="{{ blogBase['title'] }}">
+<meta property="og:description" content="{{ blogBase['subTitle'] }}">
+<meta property="og:type" content="blog">
+<meta property="og:url" content="{{ blogBase['homeUrl'] }}">
+<meta property="og:image" content="{{ blogBase['ogImage'] }}">
 <title>{{ blogBase['title'] }}</title>
 {% endblock %}
 
@@ -15,10 +20,10 @@
 
 .SideNav{min-width: 360px;}
 .SideNav-icon{margin-right: 16px}
-.SideNav-item .Label{color: #fff;margin-left:8px;}
+.SideNav-item .Label{color: #fff;margin-left:4px;}
 .d-flex{min-width:0;}
 .listTitle{overflow:hidden;white-space:nowrap;text-overflow: ellipsis;max-width: 100%;}
-.listLabels{white-space:nowrap;}
+.listLabels{white-space:nowrap;display:flex;}
 .listLabels object{max-height:16px;max-width:24px;}
 
 @media (max-width: 600px) {
@@ -29,6 +34,7 @@
     .LabelTime{display:none;}
 }
 </style>
+{{ blogBase['indexStyle'] }}
 {% endblock %}
 
 {% block header %}
@@ -41,28 +47,35 @@
     {%- endif -%}
 </h1>
 <div class="title-right">
-    <a href="{{ blogBase['homeUrl'] }}/tag.html"><button id="buttonSearch" class="btn btn-invisible circle" title="{{ i18n['Search'] }}">
+    <a href="{{ blogBase['homeUrl'] }}/tag.html" id="buttonSearch" class="btn btn-invisible circle" title="{{ i18n['Search'] }}">
         <svg class="octicon" width="16" height="16" >
             <path id="pathSearch" fill-rule="evenodd"></path>
         </svg>
-    </button></a>
+    </a>
+    {% for key, value in blogBase['exlink'].items() -%}
+    <a href="{{ value }}" class="btn btn-invisible circle" title="{{ key }}" target="_blank">
+        <svg class="octicon" width="16" height="16" >
+            <path id="{{ key }}" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    {%- endfor %}
     {% for num in blogBase['singeListJson'] -%}
-    <a href="{{ blogBase['homeUrl'] }}/{{ blogBase['singeListJson'][num]['labels'][0] }}.html"><button class="btn btn-invisible circle" title="{{ blogBase['singeListJson'][num]['postTitle'] }}">
+    <a href="{{ blogBase['homeUrl'] }}/{{ blogBase['singeListJson'][num]['labels'][0] }}.html" class="btn btn-invisible circle" title="{{ blogBase['singeListJson'][num]['postTitle'] }}">
         <svg class="octicon" width="16" height="16" >
             <path id="{{ blogBase['singeListJson'][num]['postTitle'] }}" fill-rule="evenodd"></path>
         </svg>
-    </button></a>
+    </a>
     {%- endfor %}
-    <a href="{{ blogBase['homeUrl'] }}/rss.xml" target="_blank"><button id="buttonRSS" class="btn btn-invisible circle" title="RSS">
+    <a href="{{ blogBase['homeUrl'] }}/rss.xml" target="_blank" id="buttonRSS" class="btn btn-invisible circle" title="RSS">
         <svg class="octicon" width="16" height="16" >
             <path id="pathRSS" fill-rule="evenodd"></path>
         </svg>
-    </button></a>
-    <button class="btn btn-invisible circle" onclick="modeSwitch()" title="{{ i18n['switchTheme'] }}" {%- if blogBase['themeMode']=='fix' -%}style="display:none;"{%- endif -%}>
+    </a>
+    <a class="btn btn-invisible circle" onclick="modeSwitch()" title="{{ i18n['switchTheme'] }}" {%- if blogBase['themeMode']=='fix' -%}style="display:none;"{%- endif -%}>
         <svg class="octicon" width="16" height="16" >
             <path id="themeSwitch" fill-rule="evenodd"></path>
         </svg>
-    </button>
+    </a>
 </div>
 {% endblock %}
 
@@ -120,8 +133,13 @@ for(var i=0;i<iconPost.length;i++){
     iconPost[i].setAttribute("d",IconList["post"]);
 }
 
+{% for key, value in blogBase['exlink'].items() %}
+document.getElementById("{{ key }}").setAttribute("d",value=IconList["{{ key }}"]);
+{%- endfor %}
+
 {% for num in blogBase['singeListJson'] -%}
 document.getElementById("{{ blogBase['singeListJson'][num]['postTitle'] }}").setAttribute("d",value=IconList["{{ blogBase['singeListJson'][num]['labels'][0] }}"]);
 {%- endfor %}
 </script>
+{{ blogBase['indexScript'] }}
 {% endblock %}
