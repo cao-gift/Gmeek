@@ -1,114 +1,103 @@
 {% extends 'base.html' %}
+<!-- 继承基础模板，用于统一页面结构 -->
 
 {% block head %}
+<!-- 定义页面头部区块，包含元数据和页面特定的样式链接 -->
 <meta name="description" content="{{ blogBase['description'] }}">
+<!-- 页面描述 -->
 <meta property="og:title" content="{{ blogBase['postTitle'] }}">
+<!-- 社交媒体分享标题 -->
 <meta property="og:description" content="{{ blogBase['description'] }}">
+<!-- 社交媒体分享描述 -->
 <meta property="og:type" content="article">
+<!-- 社交媒体分享类型 -->
 <meta property="og:url" content="{{ blogBase['postUrl'] }}">
+<!-- 社交媒体分享URL -->
 <meta property="og:image" content="{{ blogBase['ogImage'] }}">
+<!-- 社交媒体分享图像 -->
 <title>{{ blogBase['postTitle'] }}</title>
+<!-- 页面标题 -->
 {% if blogBase['highlight']==1 %}<link href="//unpkg.com/@wooorm/starry-night@2.1.1/style/both.css" rel="stylesheet" />{% endif %}
+<!-- 根据配置决定是否引入代码高亮样式 -->
 {% endblock %}
 
 {% block style %}
+<!-- 定义页面特定的样式区块 -->
 <style>
 .postTitle{margin: auto 0;font-size:40px;font-weight:bold;}
+<!-- 文章标题样式 -->
 .title-right{display:flex;margin:auto 0 0 auto;}
+<!-- 标题右侧操作按钮布局 -->
 .title-right .circle{padding: 14px 16px;margin-right:8px;}
 #postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
+<!-- 文章主体内容样式 -->
 #postBody hr{height:2px;}
-#cmButton{height:48px;margin-top:48px;}
-#comments{margin-top:64px;}
-.g-emoji{font-size:24px;}
+<!-- 分隔线样式 -->
+.postTitle{margin: auto 0;font-size:40px;font-weight:bold;}
+<!-- 文章标题样式 -->
+.title-right{display:flex;margin:auto 0 0 auto;}
+<!-- 标题右侧操作按钮布局 -->
+.title-right .circle{padding: 14px 16px;margin-right:8px;}
+#postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
+<!-- 文章主体内容样式 -->
+#postBody hr{height:2px;}
+<!-- 分隔线样式 -->
 @media (max-width: 600px) {
     body {padding: 8px;}
     .postTitle{font-size:24px;}
 }
+<!-- 响应式样式，针对小于600px的屏幕 -->
 </style>
 {{ blogBase['style'] }}
-
+<!-- 引入页面额外样式 -->
 {% endblock %}
+
 {% block header %}
+<!-- 页面头部内容 -->
 <h1 class="postTitle">{{ blogBase['postTitle'] }}</h1>
+<!-- 显示文章标题 -->
 <div class="title-right">
+    <!-- 标题右侧操作按钮区域 -->
     <a href="{{ blogBase['homeUrl'] }}" id="buttonHome" class="btn btn-invisible circle" title="{{ i18n['home'] }}">
+        <!-- 首页链接按钮 -->
         <svg class="octicon" width="16" height="16">
             <path id="pathHome" fill-rule="evenodd"></path>
         </svg>
     </a>
     {% if blogBase['showPostSource']==1 %}
     <a href="{{ blogBase['postSourceUrl'] }}" target="_blank" class="btn btn-invisible circle" title="Issue">
+        <!-- 文章源码链接按钮 -->
         <svg class="octicon" width="16" height="16">
             <path id="pathIssue" fill-rule="evenodd"></path>
         </svg>
     </a>
     {% endif %}
-
     <a class="btn btn-invisible circle" onclick="modeSwitch();" title="{{ i18n['switchTheme'] }}" {%- if blogBase['themeMode']=='fix' -%}style="display:none;"{%- endif -%}>
-        <svg class="octicon" width="16" height="16" >
+        <!-- 主题切换按钮 -->
+        <svg class="octicon" width="16" height="16">
             <path id="themeSwitch" fill-rule="evenodd"></path>
         </svg>
     </a>
-
 </div>
+<!-- 结束标题右侧操作按钮区域 -->
 {% endblock %}
 
 {% block content %}
+<!-- 页面主体内容 -->
 <div class="markdown-body" id="postBody">{{ blogBase['postBody'] }}</div>
+<!-- 显示文章正文 -->
 <div style="font-size:small;margin-top:8px;float:right;">{{ blogBase['bottomText'] }}</div>
-<button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">{{ i18n['comments'] }}</button>
-<div class="comments" id="comments"></div>
+<!-- 底部提示信息 -->
 {% endblock %}
 
 {% block script %}
+<!-- 页面脚本部分 -->
 <script>
 document.getElementById("pathHome").setAttribute("d",IconList["home"]);
+<!-- 设置首页图标路径 -->
 document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
-{% if blogBase['commentNum']>0 -%}
-    cmButton=document.getElementById("cmButton");
-    span=document.createElement("span");
-    span.setAttribute("class","Counter");
-    span.innerHTML="{{ blogBase['commentNum'] }}";
-    cmButton.appendChild(span);
-{%- endif %}
-function openComments(){
-    cm=document.getElementById("comments");
-    cmButton=document.getElementById("cmButton");
-    cmButton.innerHTML="loading";
-    span=document.createElement("span");
-    span.setAttribute("class","AnimatedEllipsis");
-    cmButton.appendChild(span);
-
-    script=document.createElement("script");
-    script.setAttribute("src","https://utteranc.es/client.js");
-    script.setAttribute("repo","{{ blogBase['repoName'] }}");
-    script.setAttribute("issue-term","title");
-    {% if blogBase['themeMode']=='manual' %}
-    if(localStorage.getItem("meek_theme")=="dark"){script.setAttribute("theme","dark-blue");}
-    else if(localStorage.getItem("meek_theme")=="light") {script.setAttribute("theme","github-light");}
-    else{script.setAttribute("theme","preferred-color-scheme");}
-    {% else %}
-    script.setAttribute("theme","{{ blogBase['nightTheme'] }}");
-    {% endif %}
-    script.setAttribute("crossorigin","anonymous");
-    script.setAttribute("async","");
-    cm.appendChild(script);
-
-    int=self.setInterval("iFrameLoading()",200);
-}
-
-function iFrameLoading(){
-    var utterances=document.getElementsByClassName('utterances');
-    if(utterances.length==1){
-        if(utterances[0].style.height!=""){
-            utterancesLoad=1;
-            int=window.clearInterval(int);
-            document.getElementById("cmButton").style.display="none";
-            console.log("utterances Load OK");
-        }
-    }
-}
+<!-- 设置源码图标路径 -->
 </script>
 {{ blogBase['script'] }}
+<!-- 引入页面特定脚本 -->
 {% endblock %}
