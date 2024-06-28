@@ -88,6 +88,9 @@
 <!-- 显示文章正文 -->
 <div style="font-size:small;margin-top:8px;float:right;">{{ blogBase['bottomText'] }}</div>
 <!-- 底部提示信息 -->
+
+<!-- 添加cusdis评论框 -->
+<div id="cusdis_thread" data-thread-key="{{ blogBase['postUrl'] }}" data-client-id="2bf84400-f30a-4bfd-92f1-4f9e6f7730ea" data-category-id="YOUR_CUSDIS_CATEGORY_ID" data-page-id="YOUR_CUSDIS_PAGE_ID" data-page-url="{{ blogBase['postUrl'] }}"></div>
 {% endblock %}
 
 {% block script %}
@@ -99,5 +102,5 @@ document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
 <!-- 设置源码图标路径 -->
 </script>
 {{ blogBase['script'] }}
-<!-- 引入页面特定脚本 -->
+<script src="https://cdn.jsdelivr.net/npm/cusdis@latest/dist/cusdis.min.js" crossorigin="anonymous" async></script>
 {% endblock %}
