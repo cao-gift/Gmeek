@@ -1,13 +1,25 @@
 {% extends 'base.html' %}
 
 {% block head %}
-<meta name="description" content="{{ blogBase['description'] }}">
-<meta property="og:title" content="{{ blogBase['postTitle'] }}">
-<meta property="og:description" content="{{ blogBase['description'] }}">
-<meta property="og:type" content="article">
-<meta property="og:url" content="{{ blogBase['postUrl'] }}">
-<meta property="og:image" content="{{ blogBase['ogImage'] }}">
-<title>{{ blogBase['postTitle'] }}</title>
+<meta name="description" content="{{ blogBase['description']|e }}">
+<meta name="author" content="{{ blogBase['author']|e }}">
+<meta property="og:title" content="{{ blogBase['postTitle']|e }}">
+<meta property="og:description" content="{{ blogBase['description']|e }}">
+<meta property="og:type" content="{% if blogBase['isArticle'] %}article{% else %}website{% endif %}">
+<meta property="og:url" content="{{ blogBase['postUrl']|e }}">
+<meta property="og:image" content="{{ blogBase['ogImage']|e }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ blogBase['postTitle']|e }}">
+<meta name="twitter:description" content="{{ blogBase['description']|e }}">
+<meta name="twitter:image" content="{{ blogBase['ogImage']|e }}">
+{% if blogBase['isArticle'] %}
+<meta property="article:published_time" content="{{ blogBase['datePublished']|e }}">
+<meta property="article:modified_time" content="{{ blogBase['dateModified']|e }}">
+<meta property="article:author" content="{{ blogBase['author']|e }}">
+{% for label in blogBase['labels'] -%}<meta property="article:tag" content="{{ label|e }}">{% endfor %}
+<script type="application/ld+json">{{ blogBase['articleJsonLd']|tojson }}</script>
+{% endif %}
+<title>{{ blogBase['postTitle']|e }}</title>
 {% if blogBase['highlight']==1 %}<link href="//unpkg.com/@wooorm/starry-night@2.1.1/style/both.css" rel="stylesheet" />{% endif %}
 {{ blogBase['head'] }}
 {% endblock %}
@@ -19,12 +31,22 @@
 .title-right .circle{padding: 14px 16px;margin-right:8px;}
 #postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
 #postBody hr{height:2px;}
+.postMeta{display:flex;flex-wrap:wrap;gap:6px 16px;margin:-4px 0 20px;color:var(--fgColor-muted,var(--color-fg-muted));font-size:14px;}
+.postMeta span{white-space:nowrap;}
+.postNavigation{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:32px;}
+.postNavigation a,.relatedPosts a{display:block;padding:12px;border:1px solid var(--borderColor-muted,var(--color-border-muted));border-radius:6px;}
+.postNavigation .nextPost{text-align:right;}
+.relatedPosts{margin-top:32px;}
+.relatedPosts h2{font-size:20px;margin-bottom:12px;}
+.relatedPosts ul{display:grid;gap:8px;list-style:none;}
 #cmButton{height:48px;margin-top:48px;}
 #comments{margin-top:64px;}
 .g-emoji{font-size:24px;}
 @media (max-width: 600px) {
     body {padding: 8px;}
     .postTitle{font-size:24px;}
+    .postNavigation{grid-template-columns:1fr;}
+    .postNavigation .nextPost{text-align:left;}
 }
 {% if blogBase['highlight']!=0 -%}
 .copy-feedback {
@@ -43,13 +65,18 @@
 
 {% endblock %}
 {% block header %}
-<h1 class="postTitle">{{ blogBase['postTitle'] }}</h1>
+<h1 class="postTitle">{{ blogBase['postTitle']|e }}</h1>
 <div class="title-right">
     <a href="{{ blogBase['homeUrl'] }}" id="buttonHome" class="btn btn-invisible circle" title="{{ i18n['home'] }}" aria-label="{{ i18n['home'] }}">
         <svg class="octicon" width="16" height="16" aria-hidden="true">
             <path id="pathHome" fill-rule="evenodd"></path>
         </svg>
     </a>
+    {% if blogBase['archivePage']==1 %}
+    <a href="{{ blogBase['homeUrl'] }}/archive.html" class="btn btn-invisible circle" title="{{ i18n['Archive'] }}" aria-label="{{ i18n['Archive'] }}">
+        <svg class="octicon" width="16" height="16" aria-hidden="true"><path id="pathArchive" fill-rule="evenodd"></path></svg>
+    </a>
+    {% endif %}
     {% if blogBase['showPostSource']==1 %}
     <a href="{{ blogBase['postSourceUrl'] }}" target="_blank" rel="noopener noreferrer" class="btn btn-invisible circle" title="Issue" aria-label="Issue">
         <svg class="octicon" width="16" height="16" aria-hidden="true">
@@ -68,8 +95,28 @@
 {% endblock %}
 
 {% block content %}
+{% if blogBase['isArticle'] %}
+<div class="postMeta" aria-label="文章元数据">
+    <span>{{ i18n['published'] }} <time datetime="{{ blogBase['datePublished']|e }}">{{ blogBase['createdDate']|e }}</time></span>
+    <span>{{ i18n['updated'] }} <time datetime="{{ blogBase['dateModified']|e }}">{{ blogBase['updatedDate']|e }}</time></span>
+    <span>{{ i18n['author'] }} {{ blogBase['author']|e }}</span>
+    <span>{{ i18n['wordCount'] }} {{ blogBase['wordCount'] }} · {{ i18n['readingTime'] }} {{ blogBase['readingTime'] }} {{ i18n['minRead'] }}</span>
+</div>
+{% endif %}
 <article class="markdown-body" id="postBody">{{ blogBase['postBody'] }}</article>
 <div style="font-size:small;margin-top:8px;float:right;">{{ blogBase['bottomText'] }}</div>
+{% if blogBase['isArticle'] %}
+<nav class="postNavigation" aria-label="文章导航">
+    <div>{% if blogBase['previousPost'] %}<a class="previousPost" rel="prev" href="{{ blogBase['homeUrl'] }}/{{ blogBase['previousPost']['postUrl']|e }}"><small>{{ i18n['previousPost'] }}</small><br>{{ blogBase['previousPost']['postTitle']|e }}</a>{% endif %}</div>
+    <div>{% if blogBase['nextPost'] %}<a class="nextPost" rel="next" href="{{ blogBase['homeUrl'] }}/{{ blogBase['nextPost']['postUrl']|e }}"><small>{{ i18n['nextPost'] }}</small><br>{{ blogBase['nextPost']['postTitle']|e }}</a>{% endif %}</div>
+</nav>
+{% if blogBase['relatedPosts'] %}
+<aside class="relatedPosts" aria-labelledby="relatedPostsTitle">
+    <h2 id="relatedPostsTitle">{{ i18n['related'] }}</h2>
+    <ul>{% for related in blogBase['relatedPosts'] %}<li><a href="{{ blogBase['homeUrl'] }}/{{ related['postUrl']|e }}">{{ related['postTitle']|e }}</a></li>{% endfor %}</ul>
+</aside>
+{% endif %}
+{% endif %}
 {% if blogBase['needComment']==1 %}
 <button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">{{ i18n['comments'] }}</button>
 <div class="comments" id="comments"></div>
@@ -79,8 +126,9 @@
 {% block script %}
 <script>
 document.getElementById("pathHome").setAttribute("d",IconList["home"]);
+{% if blogBase['archivePage']==1 %}document.getElementById("pathArchive").setAttribute("d",IconList["archive"]);{% endif %}
 {% if blogBase['showPostSource']==1 %}document.getElementById("pathIssue").setAttribute("d",IconList["github"]);{% endif %}
-{% if blogBase['commentNum']>0 -%}
+{% if blogBase['needComment']==1 and blogBase['commentNum']>0 -%}
     cmButton=document.getElementById("cmButton");
     span=document.createElement("span");
     span.setAttribute("class","Counter");

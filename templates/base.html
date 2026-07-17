@@ -6,7 +6,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     {{ blogBase['primerCSS'] }}
     {{ blogBase['allHead'] }}
-    <link rel="icon" href="{{ blogBase['faviconUrl'] }}">
+    <link rel="icon" href="{{ blogBase['faviconUrl']|e }}">
+    <link rel="canonical" href="{{ blogBase['canonicalUrl']|e }}">
+    <link rel="alternate" type="application/rss+xml" title="{{ blogBase['title']|e }} RSS" href="{{ blogBase['homeUrl']|e }}/rss.xml">
+    <meta name="robots" content="{{ blogBase['robots']|default('index,follow')|e }}">
+    {% if blogBase['pwa']==1 and not blogBase['previewMode'] -%}
+    <link rel="manifest" href="{{ blogBase['homeUrl']|e }}/manifest.webmanifest">
+    <meta name="theme-color" content="{{ blogBase['themeColor']|e }}">
+    {%- endif %}
     {%- if blogBase['themeMode']=='manual' -%}
     <script>
         let theme = localStorage.getItem("meek_theme") || "auto";
@@ -67,6 +74,11 @@ function utterancesTheme(theme){
 if(themeSettings[theme]){changeTheme(...themeSettings[theme]);}
 {%- endif %}
 console.log("\n %c Gmeek {{ blogBase['GMEEK_VERSION'] }} https://github.com/Meekdai/Gmeek \n","padding:5px 0;background:#02d81d;color:#fff");
+{% if blogBase['pwa']==1 and not blogBase['previewMode'] %}
+if('serviceWorker' in navigator){
+    window.addEventListener('load',()=>navigator.serviceWorker.register({{ (blogBase['homeUrl'] ~ '/sw.js')|tojson }}).catch(error=>console.warn('[Gmeek PWA] registration failed',error)));
+}
+{% endif %}
 </script>
 {% block script %}{% endblock %}
 </html>

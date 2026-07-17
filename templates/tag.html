@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block head %}
-<meta name="description" content="{{ blogBase['title'] }} search page">
-<title>{{ blogBase['title'] }} - Tag</title>
+<meta name="description" content="{{ blogBase['title']|e }} search page">
+<title>{{ blogBase['title']|e }} - {{ i18n['Search'] }}</title>
 {% endblock %}
 
 {% block style %}
@@ -23,6 +23,7 @@
 .d-flex{min-width:0;}
 .listTitle{overflow:hidden;white-space:nowrap;text-overflow: ellipsis;max-width: 100%;}
 .listLabels{white-space:nowrap;}
+.searchStatus{font-size:18px;margin:16px 8px;color:var(--fgColor-muted,var(--color-fg-muted));}
 
 @media (max-width: 600px) {
     body { padding: 8px;}
@@ -48,6 +49,11 @@
             <path id="pathHome" fill-rule="evenodd"></path>
         </svg>
     </a>
+    {% if blogBase['archivePage']==1 %}
+    <a href="{{ blogBase['homeUrl'] }}/archive.html" class="btn btn-invisible circle" title="{{ i18n['Archive'] }}" aria-label="{{ i18n['Archive'] }}">
+        <svg class="octicon" width="16" height="16" aria-hidden="true"><path id="pathArchive" fill-rule="evenodd"></path></svg>
+    </a>
+    {% endif %}
     <button class="btn btn-invisible circle" type="button" onclick="modeSwitch()" title="{{ i18n['switchTheme'] }}" aria-label="{{ i18n['switchTheme'] }}" {%- if blogBase['themeMode']=='fix' -%}style="display:none;"{%- endif -%}>
         <svg class="octicon" width="16" height="16" aria-hidden="true">
             <path id="themeSwitch" fill-rule="evenodd"></path>
@@ -59,165 +65,156 @@
 {% block content %}
 <div id="taglabel" style="margin-bottom:8px;"></div>
 <nav class="SideNav" aria-label="搜索结果"></nav>
-<div class="notFind" role="status" aria-live="polite" style="display:none;font-size:24px;margin:8px;">Not Find</div>
+<div id="searchStatus" class="searchStatus" role="status" aria-live="polite">{{ i18n['loading'] }}</div>
 {% endblock %}
 
 {% block script %}
 <script>
 document.getElementById("pathHome").setAttribute("d",IconList["home"]);
 document.getElementById("searchSVG").setAttribute("d",IconList["search"]);
+{% if blogBase['archivePage']==1 %}document.getElementById("pathArchive").setAttribute("d",IconList["archive"]);{% endif %}
 
-tagList=[];
-labelsCount={};
-jsonData='';
-let requestJson="postList.json"
-let request=new XMLHttpRequest();
-request.open("GET",requestJson);
-request.responseType='text';
-request.send();
-request.onload=function(){
-    jsonData=JSON.parse(request.response);
-    console.log(jsonData);
-    showList(labelsCount);
-    setClassDisplay(decodeURI(window.location.hash.slice(1)));
+const SEARCH_UI={
+    search:{{ i18n['Search']|tojson }},
+    noResults:{{ i18n['noResults']|tojson }},
+    loadFailed:{{ i18n['loadFailed']|tojson }},
+    siteTitle:{{ blogBase['title']|tojson }}
+};
+const searchState={posts:[],labels:new Set(),labelColors:{},ready:false};
+const resultList=document.querySelector('.SideNav');
+const tagContainer=document.getElementById('taglabel');
+const statusElement=document.getElementById('searchStatus');
+const searchInput=document.getElementById('siteSearch');
+const pageTitle=document.querySelector('.tagTitle');
+
+const normalize=value=>(value || '').normalize('NFKC').toLocaleLowerCase();
+const setStatus=(message,visible=true)=>{
+    statusElement.textContent=message;
+    statusElement.style.display=visible ? 'block' : 'none';
+};
+
+function createPostItem(post){
+    const wrapper=document.createElement('div');
+    wrapper.className='lists';
+    wrapper.dataset.labels=JSON.stringify(post.labels || []);
+    wrapper.dataset.search=normalize([post.postTitle,(post.labels || []).join(' '),post.description,post.searchText].join(' '));
+
+    const item=document.createElement('a');
+    item.className='SideNav-item d-flex flex-items-center flex-justify-between';
+    item.href=post.postUrl;
+    const center=document.createElement('div');
+    center.className='d-flex flex-items-center';
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('class','SideNav-icon octicon');
+    svg.setAttribute('width','16');
+    svg.setAttribute('height','16');
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',IconList.post);
+    svg.appendChild(path);
+    const title=document.createElement('span');
+    title.className='listTitle';
+    title.textContent=post.postTitle;
+    center.append(svg,title);
+
+    const labels=document.createElement('div');
+    labels.className='listLabels';
+    (post.labels || []).forEach(label=>{
+        const badge=document.createElement('span');
+        badge.className='Label LabelName';
+        badge.style.backgroundColor=searchState.labelColors[label] || '#57606a';
+        badge.textContent=label;
+        labels.appendChild(badge);
+    });
+    const date=document.createElement('span');
+    date.className='Label LabelTime';
+    date.style.backgroundColor=post.dateLabelColor;
+    date.textContent=post.createdDate;
+    labels.appendChild(date);
+    item.append(center,labels);
+    wrapper.appendChild(item);
+    return wrapper;
 }
 
-function showList(labelsCount){
-    let SideNav=document.getElementsByClassName("SideNav")[0];
-    SideNav.classList.add("border");
-    let taglabel=document.getElementById("taglabel");
+function renderIndex(payload){
+    searchState.labelColors=payload.labelColorDict || {};
+    searchState.posts=Object.entries(payload).filter(([key])=>key!=='labelColorDict').map(([,post])=>post);
+    const counts={All:searchState.posts.length};
+    searchState.posts.forEach(post=>(post.labels || []).forEach(label=>counts[label]=(counts[label] || 0)+1));
+    searchState.labels=new Set(Object.keys(counts));
+    searchState.labelColors.All='#24292f';
 
-    jsonData['labelColorDict']["All"]="#000";
-    labelsCount["All"]=0;
-    for (let key in jsonData) {
-        if (key !== 'labelColorDict' && Array.isArray(jsonData[key]['labels'])) {
-            labelsCount["All"]++;
-            for (let label of jsonData[key]['labels']) {
-                labelsCount[label] = (labelsCount[label] || 0) + 1;
-            }
-        }
-    }
+    Object.keys(counts).sort((a,b)=>counts[b]-counts[a] || a.localeCompare(b)).forEach(label=>{
+        const button=document.createElement('button');
+        button.className='Label';
+        button.type='button';
+        button.style.cssText='background-color:'+(searchState.labelColors[label] || '#57606a')+';padding:4px;';
+        button.append(document.createTextNode('\u00a0\u00a0'+label+' '));
+        const count=document.createElement('span');
+        count.className='Counter';
+        count.textContent=counts[label];
+        button.appendChild(count);
+        button.addEventListener('click',()=>updateShowTag(label));
+        tagContainer.appendChild(button);
+    });
+    const fragment=document.createDocumentFragment();
+    searchState.posts.forEach(post=>fragment.appendChild(createPostItem(post)));
+    resultList.appendChild(fragment);
+    resultList.classList.add('border');
+    searchState.ready=true;
+}
 
-    let sortedLabelsList = Object.keys(labelsCount).sort((a, b) => labelsCount[b] - labelsCount[a]);
-    for (let label of sortedLabelsList) {
-        tagList.push(label);
-        let showLabels = document.createElement("button");
-        showLabels.setAttribute("class", "Label");
-        showLabels.setAttribute("type", "button");
-        showLabels.setAttribute("style", "background-color:" + jsonData['labelColorDict'][label]+";padding:4px;");
-        showLabels.innerHTML="&nbsp;&nbsp;"+label+" ";
-        showLabels.setAttribute("onclick", "javascript:updateShowTag('" + label + "');");
-
-        let LabelNum=document.createElement("span");
-        LabelNum.setAttribute("class","Counter");
-        LabelNum.innerHTML=labelsCount[label];
-        showLabels.appendChild(LabelNum);
-        taglabel.appendChild(showLabels);
-    }
-
-    for(i in jsonData){
-        if(i!='labelColorDict'){
-            let div=document.createElement("div");
-            div.setAttribute("class","lists "+jsonData[i]['labels'].join(" "));
-            let item=document.createElement("a");
-            item.setAttribute("class","SideNav-item d-flex flex-items-center flex-justify-between");
-            item.setAttribute("href",jsonData[i]['postUrl']);
-
-            let center=document.createElement("div");
-            center.setAttribute("class","d-flex flex-items-center");
-
-            svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-            path=document.createElementNS("http://www.w3.org/2000/svg","path"); 
-            span=document.createElement("span");
-            svg.setAttributeNS(null,"class","SideNav-icon octicon");
-            svg.setAttributeNS(null,"style","width:16px;height:16px");
-            path.setAttributeNS(null, "d", IconList["post"]);
-            svg.appendChild(path);
-
-            let title=document.createElement("span");
-            title.setAttribute("class","listTitle");
-            title.innerHTML=jsonData[i]['postTitle'];
-            center.appendChild(svg);
-            center.appendChild(title);
-
-            let listLabels=document.createElement("div");
-            listLabels.setAttribute("class","listLabels");
-            
-            for(label of jsonData[i]['labels']){
-                let LabelName=document.createElement("span");
-                LabelName.setAttribute("class","Label LabelName");
-                LabelName.setAttribute("style","background-color:"+jsonData['labelColorDict'][label]);
-                LabelName.innerHTML=label;
-                listLabels.appendChild(LabelName);
-            }
-            let LabelTime=document.createElement("span");
-            LabelTime.setAttribute("class","Label LabelTime");
-            LabelTime.setAttribute("style","background-color:"+jsonData[i]['dateLabelColor']);
-            LabelTime.innerHTML=jsonData[i]['createdDate'];
-            listLabels.appendChild(LabelTime);
-
-            item.appendChild(center);
-            item.appendChild(listLabels);
-            div.appendChild(item);
-            SideNav.appendChild(div);
-        }
-    }
+function applyFilter(value,forceSearch=false){
+    if(!searchState.ready) return;
+    const label=value || 'All';
+    const isTag=!forceSearch && searchState.labels.has(label);
+    const terms=normalize(value).split(/\s+/).filter(Boolean);
+    let matches=0;
+    document.querySelectorAll('.lists').forEach(item=>{
+        const labels=JSON.parse(item.dataset.labels);
+        const visible=isTag ? (label==='All' || labels.includes(label)) : terms.every(term=>item.dataset.search.includes(term));
+        item.style.display=visible ? 'block' : 'none';
+        if(visible) matches++;
+    });
+    pageTitle.textContent=(isTag ? 'Tag #' : SEARCH_UI.search+' #')+(value || (isTag ? 'All' : ''));
+    document.title=(value || SEARCH_UI.search)+' - '+SEARCH_UI.siteTitle;
+    setStatus(matches ? '' : SEARCH_UI.noResults+(value ? ' “'+value+'”' : ''),matches===0);
 }
 
 function updateShowTag(label){
-    if(window.location.hash.slice(1)!=encodeURI(label)){
-        window.location.hash="#"+(label);
-        setClassDisplay(label);
-    }
-}
-
-function setClassDisplay(label){
-    let lists = document.getElementsByClassName("lists");
-    let tagTitle = document.getElementsByClassName("tagTitle")[0];
-    tagTitle.innerHTML="Tag #"+label;
-    document.title=label+" - {{ blogBase['title'] }}";
-    document.getElementsByClassName("subnav-search-input")[0].value='';
-    if(label=="All"){
-        for(let i = 0; i < lists.length; i++){lists[i].style.display='block';}
-        document.getElementsByClassName("notFind")[0].style.display='none';
-    }
-    else if(tagList.indexOf(label)!=-1){
-        for(let i = 0; i < lists.length; i++){
-            lists[i].style.display='none';
-        }
-
-        let labels = document.getElementsByClassName(label);
-        for(let i = 0; i < labels.length; i++){
-            labels[i].style.display='block';
-        }
-        document.getElementsByClassName("notFind")[0].style.display='none';
-    }
-    else{
-        document.getElementsByClassName("subnav-search-input")[0].value=label;
-        searchShow();
-    }
+    searchInput.value='';
+    window.location.hash=encodeURIComponent(label);
+    applyFilter(label);
 }
 
 function searchShow(){
-    let lists = document.getElementsByClassName("lists");
-    let tagTitle = document.getElementsByClassName("tagTitle")[0];
-    let searchInput = document.getElementsByClassName("subnav-search-input")[0].value;
-    tagTitle.innerHTML="Search #"+searchInput;
-    if(searchInput==''){document.title="Search - {{ blogBase['title'] }}";}
-    else{document.title=searchInput+" - {{ blogBase['title'] }}";}
-    let a=0;
-    window.location.hash="#"+(searchInput);
-    for(let i = 0; i < lists.length; i++){
-        if(lists[i].childNodes[0].childNodes[0].childNodes[1].innerHTML.toUpperCase().indexOf(searchInput.toUpperCase())==-1){lists[i].style.display='none';}
-        else{lists[i].style.display='block';a=a+1;}
-    }
-    if(a==0){
-        let notFind=document.getElementsByClassName("notFind")[0];
-        notFind.style.display='block';
-        notFind.innerHTML='Not Find "'+searchInput+'"';
-    }
-    else{document.getElementsByClassName("notFind")[0].style.display='none';}
+    const query=searchInput.value.trim();
+    window.location.hash=encodeURIComponent(query);
+    applyFilter(query,true);
 }
+
+window.updateShowTag=updateShowTag;
+window.searchShow=searchShow;
+
+fetch('postList.json',{headers:{Accept:'application/json'}})
+    .then(response=>{
+        if(!response.ok) throw new Error('HTTP '+response.status);
+        return response.json();
+    })
+    .then(payload=>{
+        renderIndex(payload);
+        let initial='All';
+        try{initial=decodeURIComponent(window.location.hash.slice(1)) || 'All';}catch(error){initial='All';}
+        if(searchState.labels.has(initial)) applyFilter(initial);
+        else{
+            searchInput.value=initial;
+            applyFilter(initial,true);
+        }
+    })
+    .catch(error=>{
+        console.error('[Gmeek search]',error);
+        pageTitle.textContent=SEARCH_UI.search;
+        setStatus(SEARCH_UI.loadFailed);
+    });
 
 </script>
 {% endblock %}

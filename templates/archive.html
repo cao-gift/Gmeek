@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block head %}
+<meta name="description" content="{{ blogBase['title']|e }} {{ i18n['Archive']|e }}">
+<meta property="og:title" content="{{ blogBase['title']|e }} - {{ i18n['Archive']|e }}">
+<meta property="og:description" content="{{ blogBase['subTitle']|e }}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ blogBase['canonicalUrl']|e }}">
+<title>{{ i18n['Archive'] }} - {{ blogBase['title']|e }}</title>
+{% endblock %}
+
+{% block style %}
+<style>
+.archiveTitle{margin:auto 0;font-size:40px;font-weight:bold;}
+.title-right{display:flex;margin:auto 0 0 auto;}
+.title-right .circle{padding:14px 16px;margin-right:8px;}
+.archiveYear{margin:32px 0 12px;font-size:26px;}
+.archiveList{list-style:none;}
+.archiveList li{display:grid;grid-template-columns:110px minmax(0,1fr) auto;gap:12px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--borderColor-muted,var(--color-border-muted));}
+.archiveDate,.archiveMeta{color:var(--fgColor-muted,var(--color-fg-muted));font-size:14px;}
+.archivePost{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+@media(max-width:600px){
+    body{padding:8px;}
+    .archiveTitle{font-size:28px;}
+    .archiveList li{grid-template-columns:86px minmax(0,1fr);}
+    .archiveMeta{display:none;}
+}
+</style>
+{% endblock %}
+
+{% block header %}
+<h1 class="archiveTitle">{{ i18n['Archive'] }}</h1>
+<div class="title-right">
+    <a href="{{ blogBase['homeUrl'] }}" class="btn btn-invisible circle" title="{{ i18n['home'] }}" aria-label="{{ i18n['home'] }}">
+        <svg class="octicon" width="16" height="16" aria-hidden="true"><path id="pathHome" fill-rule="evenodd"></path></svg>
+    </a>
+    <button class="btn btn-invisible circle" type="button" onclick="modeSwitch()" title="{{ i18n['switchTheme'] }}" aria-label="{{ i18n['switchTheme'] }}" {% if blogBase['themeMode']=='fix' %}style="display:none;"{% endif %}>
+        <svg class="octicon" width="16" height="16" aria-hidden="true"><path id="themeSwitch" fill-rule="evenodd"></path></svg>
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+{% for year, posts in blogBase['archive'].items() %}
+<section aria-labelledby="archive-{{ year }}">
+    <h2 class="archiveYear" id="archive-{{ year }}">{{ year }}</h2>
+    <ul class="archiveList">
+    {% for post in posts %}
+        <li>
+            <time class="archiveDate" datetime="{{ post['datePublished']|e }}">{{ post['createdDate']|e }}</time>
+            <a class="archivePost" href="{{ blogBase['homeUrl'] }}/{{ post['postUrl']|e }}">{{ post['postTitle']|e }}</a>
+            <span class="archiveMeta">{{ post['readingTime'] }} {{ i18n['minRead'] }}</span>
+        </li>
+    {% endfor %}
+    </ul>
+</section>
+{% endfor %}
+{% endblock %}
+
+{% block script %}
+<script>document.getElementById('pathHome').setAttribute('d',IconList.home);</script>
+{% endblock %}

@@ -1,12 +1,16 @@
 {% extends 'base.html' %}
 {% block head %}
-<meta name="description" content="{{ blogBase['subTitle'] }}">
-<meta property="og:title" content="{{ blogBase['title'] }}">
-<meta property="og:description" content="{{ blogBase['subTitle'] }}">
+<meta name="description" content="{{ blogBase['subTitle']|e }}">
+<meta property="og:title" content="{{ blogBase['title']|e }}">
+<meta property="og:description" content="{{ blogBase['subTitle']|e }}">
 <meta property="og:type" content="blog">
-<meta property="og:url" content="{{ blogBase['homeUrl'] }}">
-<meta property="og:image" content="{{ blogBase['ogImage'] }}">
-<title>{{ blogBase['title'] }}</title>
+<meta property="og:url" content="{{ blogBase['canonicalUrl']|e }}">
+<meta property="og:image" content="{{ blogBase['ogImage']|e }}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="{{ blogBase['title']|e }}">
+<meta name="twitter:description" content="{{ blogBase['subTitle']|e }}">
+<meta name="twitter:image" content="{{ blogBase['ogImage']|e }}">
+<title>{{ blogBase['title']|e }}</title>
 {% endblock %}
 
 {% block style %}
@@ -55,6 +59,13 @@
             <path id="pathSearch" fill-rule="evenodd"></path>
         </svg>
     </a>
+    {% if blogBase['archivePage']==1 %}
+    <a href="{{ blogBase['homeUrl'] }}/archive.html" id="buttonArchive" class="btn btn-invisible circle" title="{{ i18n['Archive'] }}" aria-label="{{ i18n['Archive'] }}">
+        <svg class="octicon" width="16" height="16" aria-hidden="true">
+            <path id="pathArchive" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    {% endif %}
     {% for key, value in blogBase['exlink'].items() -%}
     <a href="{{ value }}" class="btn btn-invisible circle" title="{{ key }}" aria-label="{{ key }}" target="_blank" rel="noopener noreferrer">
         <svg class="octicon" width="16" height="16" aria-hidden="true">
@@ -126,6 +137,7 @@
 <script>
 document.getElementById("pathSearch").setAttribute("d",IconList["search"]);
 document.getElementById("pathRSS").setAttribute("d",IconList["rss"]);
+{% if blogBase['archivePage']==1 %}document.getElementById("pathArchive").setAttribute("d",IconList["archive"]);{% endif %}
 iconTOP=document.getElementsByClassName("svgTop1");
 iconPost=document.getElementsByClassName("svgTop0");
 for(var i=0;i<iconTOP.length;i++){
