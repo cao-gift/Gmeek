@@ -10,9 +10,9 @@
 .title-right{display:flex;margin:auto 0 0 auto;}
 .title-right .circle{padding: 14px 16px;margin-right:8px;}
 
-.subnav-search{width:222px;margin-top:8px;margin-right:8px;}
-.subnav-search-input{width:160px;border-top-right-radius:0px;border-bottom-right-radius:0px;}
-.subnav-search button{padding:5px 8px;border-top-left-radius:0px;border-bottom-left-radius:0px;}
+.subnav-search{width:320px;margin-top:8px;margin-right:8px;display:flex;align-items:stretch;}
+.subnav-search-input{width:auto;min-width:0;flex:1 1 auto;border-top-right-radius:0;border-bottom-right-radius:0;}
+.subnav-search button{flex:0 0 auto;padding:5px 12px;border-top-left-radius:0;border-bottom-left-radius:0;}
 
 .SideNav-icon{margin-right:16px}
 .Label{color: #fff;margin-left:4px;}
@@ -26,39 +26,40 @@
 
 @media (max-width: 600px) {
     body { padding: 8px;}
-    .tagTitle{display:none;}
+    .tagTitle{font-size:28px;white-space:normal;}
     .LabelTime{display:none;}
 }
 </style>
 {% endblock %}
 
 {% block header %}
-<span class="tagTitle"><span>Loading</span><span class="AnimatedEllipsis"></span></span>
+<h1 class="tagTitle"><span>Loading</span><span class="AnimatedEllipsis"></span></h1>
 <div class="title-right">
-    <div class="subnav-search">
-        <input type="search" class="form-control subnav-search-input float-left" aria-label="Search site" value="" style="height:32px;">
-        <button class="btn float-left" type="submit" onclick="javascript:searchShow()">{{ i18n['Search'] }}</button>
+    <form class="subnav-search" role="search" onsubmit="event.preventDefault();searchShow();">
+        <label class="sr-only" for="siteSearch">{{ i18n['Search'] }}</label>
+        <input id="siteSearch" name="q" type="search" class="form-control subnav-search-input" aria-label="{{ i18n['Search'] }}" autocomplete="off" value="">
+        <button class="btn search-submit" type="submit">{{ i18n['Search'] }}</button>
         <svg class="subnav-search-icon octicon octicon-search" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
             <path id="searchSVG" fill-rule="evenodd"></path>
         </svg>
-    </div>
-    <a href="{{ blogBase['homeUrl'] }}" id="buttonHome" class="btn btn-invisible circle" title="{{ i18n['home'] }}">
-        <svg class="octicon" width="16" height="16">
+    </form>
+    <a href="{{ blogBase['homeUrl'] }}" id="buttonHome" class="btn btn-invisible circle" title="{{ i18n['home'] }}" aria-label="{{ i18n['home'] }}">
+        <svg class="octicon" width="16" height="16" aria-hidden="true">
             <path id="pathHome" fill-rule="evenodd"></path>
         </svg>
     </a>
-    <a class="btn btn-invisible circle" onclick="modeSwitch()" title="{{ i18n['switchTheme'] }}" {%- if blogBase['themeMode']=='fix' -%}style="display:none;"{%- endif -%}>
-        <svg class="octicon" width="16" height="16" >
+    <button class="btn btn-invisible circle" type="button" onclick="modeSwitch()" title="{{ i18n['switchTheme'] }}" aria-label="{{ i18n['switchTheme'] }}" {%- if blogBase['themeMode']=='fix' -%}style="display:none;"{%- endif -%}>
+        <svg class="octicon" width="16" height="16" aria-hidden="true">
             <path id="themeSwitch" fill-rule="evenodd"></path>
         </svg>
-    </a>
+    </button>
 </div>
 {% endblock %}
 
 {% block content %}
 <div id="taglabel" style="margin-bottom:8px;"></div>
-<nav class="SideNav"></nav>
-<div class="notFind" style="display:none;font-size:24px;margin:8px;">Not Find</div>
+<nav class="SideNav" aria-label="搜索结果"></nav>
+<div class="notFind" role="status" aria-live="polite" style="display:none;font-size:24px;margin:8px;">Not Find</div>
 {% endblock %}
 
 {% block script %}
@@ -102,6 +103,7 @@ function showList(labelsCount){
         tagList.push(label);
         let showLabels = document.createElement("button");
         showLabels.setAttribute("class", "Label");
+        showLabels.setAttribute("type", "button");
         showLabels.setAttribute("style", "background-color:" + jsonData['labelColorDict'][label]+";padding:4px;");
         showLabels.innerHTML="&nbsp;&nbsp;"+label+" ";
         showLabels.setAttribute("onclick", "javascript:updateShowTag('" + label + "');");

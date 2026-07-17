@@ -45,30 +45,30 @@
 {% block header %}
 <h1 class="postTitle">{{ blogBase['postTitle'] }}</h1>
 <div class="title-right">
-    <a href="{{ blogBase['homeUrl'] }}" id="buttonHome" class="btn btn-invisible circle" title="{{ i18n['home'] }}">
-        <svg class="octicon" width="16" height="16">
+    <a href="{{ blogBase['homeUrl'] }}" id="buttonHome" class="btn btn-invisible circle" title="{{ i18n['home'] }}" aria-label="{{ i18n['home'] }}">
+        <svg class="octicon" width="16" height="16" aria-hidden="true">
             <path id="pathHome" fill-rule="evenodd"></path>
         </svg>
     </a>
     {% if blogBase['showPostSource']==1 %}
-    <a href="{{ blogBase['postSourceUrl'] }}" target="_blank" class="btn btn-invisible circle" title="Issue">
-        <svg class="octicon" width="16" height="16">
+    <a href="{{ blogBase['postSourceUrl'] }}" target="_blank" rel="noopener noreferrer" class="btn btn-invisible circle" title="Issue" aria-label="Issue">
+        <svg class="octicon" width="16" height="16" aria-hidden="true">
             <path id="pathIssue" fill-rule="evenodd"></path>
         </svg>
     </a>
     {% endif %}
 
-    <a class="btn btn-invisible circle" onclick="modeSwitch();" title="{{ i18n['switchTheme'] }}" {%- if blogBase['themeMode']=='fix' -%}style="display:none;"{%- endif -%}>
-        <svg class="octicon" width="16" height="16" >
+    <button class="btn btn-invisible circle" type="button" onclick="modeSwitch();" title="{{ i18n['switchTheme'] }}" aria-label="{{ i18n['switchTheme'] }}" {%- if blogBase['themeMode']=='fix' -%}style="display:none;"{%- endif -%}>
+        <svg class="octicon" width="16" height="16" aria-hidden="true">
             <path id="themeSwitch" fill-rule="evenodd"></path>
         </svg>
-    </a>
+    </button>
 
 </div>
 {% endblock %}
 
 {% block content %}
-<div class="markdown-body" id="postBody">{{ blogBase['postBody'] }}</div>
+<article class="markdown-body" id="postBody">{{ blogBase['postBody'] }}</article>
 <div style="font-size:small;margin-top:8px;float:right;">{{ blogBase['bottomText'] }}</div>
 {% if blogBase['needComment']==1 %}
 <button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">{{ i18n['comments'] }}</button>
@@ -134,11 +134,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const createClipboardHTML = (codeContent, additionalClasses = '') => `
         <pre class="notranslate"><code class="notranslate">${codeContent}</code></pre>
         <div class="clipboard-container position-absolute right-0 top-0 ${additionalClasses}">
-            <clipboard-copy class="ClipboardButton btn m-2 p-0" role="button" style="display: inherit;">
-                <svg height="16" width="16" class="octicon octicon-copy m-2"><path d="${IconList["copy"]}"></path></svg>
-                <svg height="16" width="16" class="octicon octicon-check color-fg-success m-2 d-none"><path d="${IconList["check"]}"></path></svg>
+            <clipboard-copy class="ClipboardButton btn m-2 p-0" role="button" tabindex="0" aria-label="复制代码" style="display: inherit;">
+                <svg height="16" width="16" class="octicon octicon-copy m-2" aria-hidden="true"><path d="${IconList["copy"]}"></path></svg>
+                <svg height="16" width="16" class="octicon octicon-check color-fg-success m-2 d-none" aria-hidden="true"><path d="${IconList["check"]}"></path></svg>
             </clipboard-copy>
-            <div class="copy-feedback">Copied!</div>
+            <div class="copy-feedback" role="status" aria-live="polite">已复制</div>
         </div>
     `;
 
@@ -162,17 +162,30 @@ document.addEventListener('DOMContentLoaded', () => {
     handleCodeElements('pre.notranslate > code.notranslate');
     handleCodeElements('div.highlight > pre.notranslate');
 
-    let currentFeedback = null;
-    document.querySelectorAll('clipboard-copy').forEach(copyButton => {
-        copyButton.addEventListener('click', () => {
-            const codeContent = copyButton.closest('.snippet-clipboard-content').innerText;
-            const tempTextArea = document.createElement('textarea');
-            tempTextArea.value = codeContent;
-            document.body.appendChild(tempTextArea);
-            tempTextArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempTextArea);
+    const writeClipboard = async text => {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
 
+        const tempTextArea = document.createElement('textarea');
+        tempTextArea.value = text;
+        tempTextArea.setAttribute('readonly', '');
+        tempTextArea.style.position = 'fixed';
+        tempTextArea.style.opacity = '0';
+        document.body.appendChild(tempTextArea);
+        tempTextArea.select();
+        const copied = document.execCommand('copy');
+        document.body.removeChild(tempTextArea);
+        if (!copied) throw new Error('Clipboard copy failed');
+    };
+
+    let currentFeedback = null;
+    const copyCode = async copyButton => {
+        const codeElement = copyButton.closest('.snippet-clipboard-content').querySelector('pre code');
+        const codeContent = codeElement ? codeElement.innerText : '';
+        try {
+            await writeClipboard(codeContent);
             const copyIcon = copyButton.querySelector('.octicon-copy');
             const checkIcon = copyButton.querySelector('.octicon-check');
             const copyFeedback = copyButton.nextElementSibling;
@@ -182,6 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             copyIcon.classList.add('d-none');
             checkIcon.classList.remove('d-none');
+            copyFeedback.textContent = '已复制';
             copyFeedback.style.display = 'block';
             copyButton.style.borderColor = 'var(--color-success-fg)';
 
@@ -191,6 +205,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 copyFeedback.style.display = 'none';
                 copyButton.style.borderColor = '';
             }, 2000);
+        } catch (error) {
+            const copyFeedback = copyButton.nextElementSibling;
+            copyFeedback.textContent = '复制失败';
+            copyFeedback.style.display = 'block';
+            setTimeout(() => {copyFeedback.style.display = 'none';}, 2000);
+        }
+    };
+
+    document.querySelectorAll('clipboard-copy').forEach(copyButton => {
+        copyButton.addEventListener('click', () => copyCode(copyButton));
+        copyButton.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                copyCode(copyButton);
+            }
         });
     });
 });
