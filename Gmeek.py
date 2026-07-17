@@ -9,6 +9,9 @@ import urllib
 import requests
 import argparse
 import html
+import hashlib
+import struct
+from concurrent.futures import ThreadPoolExecutor
 from github import Github
 from xpinyin import Pinyin
 from feedgen.feed import FeedGenerator
@@ -44,6 +47,11 @@ class GMEEK():
         self.post_folder='post/'
         self.backup_dir='backup/'
         self.post_dir=self.root_dir+self.post_folder
+        self.cache_dir=os.environ.get("GMEEK_CACHE_DIR", os.path.join(os.path.expanduser("~"), ".cache", "gmeek"))
+        self.markdown_cache_dir=os.path.join(self.cache_dir, "markdown-v1")
+        self.image_cache_dir=os.path.join(self.cache_dir, "image-dimensions-v1")
+        os.makedirs(self.markdown_cache_dir, exist_ok=True)
+        os.makedirs(self.image_cache_dir, exist_ok=True)
 
         user = Github(self.options.github_token)
         self.repo = self.get_repo(user, options.repo_name)
@@ -126,14 +134,186 @@ class GMEEK():
         return user.get_repo(repo)
 
     def markdown2html(self, mdstr):
+        cache_key=hashlib.sha256(("gfm-v1\0"+mdstr).encode("utf-8")).hexdigest()
+        cache_file=os.path.join(self.markdown_cache_dir, cache_key+".html")
+        if os.path.exists(cache_file):
+            try:
+                with open(cache_file, "r", encoding="utf-8") as f:
+                    print("markdown cache hit: {}".format(cache_key[:12]))
+                    return f.read()
+            except OSError:
+                pass
+
         payload = {"text": mdstr, "mode": "gfm"}
         headers = {"Authorization": "token {}".format(self.options.github_token)}
         try:
-            response = requests.post("https://api.github.com/markdown", json=payload, headers=headers)
+            response = requests.post("https://api.github.com/markdown", json=payload, headers=headers, timeout=(5, 30))
             response.raise_for_status()  # Raises an exception if status code is not 200
-            return response.text
+            output=response.text
+            temp_file=cache_file+".{}.tmp".format(os.getpid())
+            try:
+                with open(temp_file, "w", encoding="utf-8") as f:
+                    f.write(output)
+                os.replace(temp_file, cache_file)
+            except OSError:
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+            return output
         except requests.RequestException as e:
             raise Exception("markdown2html error: {}".format(e))
+
+    def imageDimensionsFromBytes(self, data):
+        if len(data)>=24 and data.startswith(b"\x89PNG\r\n\x1a\n"):
+            return struct.unpack(">II", data[16:24])
+        if len(data)>=10 and data[:6] in (b"GIF87a", b"GIF89a"):
+            return struct.unpack("<HH", data[6:10])
+        if len(data)>=30 and data.startswith(b"RIFF") and data[8:12]==b"WEBP":
+            if data[12:16]==b"VP8X":
+                return (1+int.from_bytes(data[24:27], "little"), 1+int.from_bytes(data[27:30], "little"))
+            if data[12:16]==b"VP8L" and data[20:21]==b"/":
+                bits=int.from_bytes(data[21:25], "little")
+                return ((bits & 0x3fff)+1, ((bits >> 14) & 0x3fff)+1)
+            frame_header=data.find(b"\x9d\x01\x2a", 16)
+            if frame_header!=-1 and len(data)>=frame_header+7:
+                width, height=struct.unpack("<HH", data[frame_header+3:frame_header+7])
+                return (width & 0x3fff, height & 0x3fff)
+        if len(data)>=4 and data.startswith(b"\xff\xd8"):
+            offset=2
+            sof_markers={0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf}
+            while offset+4<=len(data):
+                if data[offset]!=0xff:
+                    offset+=1
+                    continue
+                marker=data[offset+1]
+                offset+=2
+                if marker in (0xd8,0xd9) or 0xd0<=marker<=0xd7:
+                    continue
+                if offset+2>len(data):
+                    break
+                segment_length=struct.unpack(">H", data[offset:offset+2])[0]
+                if segment_length<2 or offset+segment_length>len(data):
+                    break
+                if marker in sof_markers and segment_length>=7:
+                    height, width=struct.unpack(">HH", data[offset+3:offset+7])
+                    return (width, height)
+                offset+=segment_length
+        return None
+
+    def getCachedImageDimensions(self, url):
+        cache_key=hashlib.sha256(url.encode("utf-8")).hexdigest()
+        cache_file=os.path.join(self.image_cache_dir, cache_key+".json")
+        if os.path.exists(cache_file):
+            try:
+                with open(cache_file, "r", encoding="utf-8") as f:
+                    dimensions=json.load(f)
+                if isinstance(dimensions, list) and len(dimensions)==2:
+                    return (int(dimensions[0]), int(dimensions[1]))
+            except (OSError, ValueError, TypeError):
+                pass
+        return None
+
+    def cacheImageDimensions(self, url, dimensions):
+        cache_key=hashlib.sha256(url.encode("utf-8")).hexdigest()
+        cache_file=os.path.join(self.image_cache_dir, cache_key+".json")
+        temp_file=cache_file+".{}.tmp".format(os.getpid())
+        try:
+            with open(temp_file, "w", encoding="utf-8") as f:
+                json.dump(list(dimensions), f)
+            os.replace(temp_file, cache_file)
+        except OSError:
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+
+    def getImageDimensions(self, urls):
+        for url in urls:
+            cached=self.getCachedImageDimensions(url)
+            if cached:
+                return cached
+
+        for url in urls:
+            if not re.match(r"^https?://", url, flags=re.IGNORECASE):
+                continue
+            try:
+                with requests.get(
+                    url,
+                    headers={"Range":"bytes=0-262143", "Accept-Encoding":"identity"},
+                    stream=True,
+                    timeout=(3, 8)
+                ) as response:
+                    response.raise_for_status()
+                    data=b""
+                    for chunk in response.iter_content(chunk_size=32768):
+                        data+=chunk
+                        if len(data)>=262144:
+                            break
+                dimensions=self.imageDimensionsFromBytes(data)
+                if dimensions and dimensions[0]>0 and dimensions[1]>0:
+                    for candidate in urls:
+                        self.cacheImageDimensions(candidate, dimensions)
+                    return dimensions
+            except requests.RequestException:
+                continue
+        return None
+
+    def optimizePostImages(self, post_body):
+        image_tags=list(re.finditer(r"<img\b[^>]*>", post_body, flags=re.IGNORECASE))
+        if not image_tags:
+            return post_body
+
+        def get_attr(tag, name):
+            match=re.search(r"\s"+re.escape(name)+r"\s*=\s*([\"'])(.*?)\1", tag, flags=re.IGNORECASE|re.DOTALL)
+            return html.unescape(match.group(2)) if match else ""
+
+        image_urls={}
+        for match in image_tags:
+            tag=match.group(0)
+            if re.search(r"\swidth\s*=", tag, flags=re.IGNORECASE) and re.search(r"\sheight\s*=", tag, flags=re.IGNORECASE):
+                continue
+            urls=[]
+            for name in ("data-canonical-src", "src"):
+                url=get_attr(tag, name)
+                if url and url not in urls:
+                    urls.append(url)
+            if urls:
+                image_urls[tuple(urls)]=None
+
+        if image_urls:
+            with ThreadPoolExecutor(max_workers=min(8, len(image_urls))) as executor:
+                dimensions=executor.map(self.getImageDimensions, image_urls.keys())
+                image_urls=dict(zip(image_urls.keys(), dimensions))
+
+        image_index=0
+        def add_attributes(match):
+            nonlocal image_index
+            tag=match.group(0)
+            is_priority=image_index==0
+            image_index+=1
+            attributes=[]
+            if not re.search(r"\sloading\s*=", tag, flags=re.IGNORECASE):
+                attributes.append('loading="{}"'.format("eager" if is_priority else "lazy"))
+            if not re.search(r"\sdecoding\s*=", tag, flags=re.IGNORECASE):
+                attributes.append('decoding="async"')
+            if not re.search(r"\sfetchpriority\s*=", tag, flags=re.IGNORECASE):
+                attributes.append('fetchpriority="{}"'.format("high" if is_priority else "low"))
+            if not (re.search(r"\swidth\s*=", tag, flags=re.IGNORECASE) and re.search(r"\sheight\s*=", tag, flags=re.IGNORECASE)):
+                urls=[]
+                for name in ("data-canonical-src", "src"):
+                    url=get_attr(tag, name)
+                    if url and url not in urls:
+                        urls.append(url)
+                dimensions=image_urls.get(tuple(urls))
+                if dimensions:
+                    if not re.search(r"\swidth\s*=", tag, flags=re.IGNORECASE):
+                        attributes.append('width="{}"'.format(dimensions[0]))
+                    if not re.search(r"\sheight\s*=", tag, flags=re.IGNORECASE):
+                        attributes.append('height="{}"'.format(dimensions[1]))
+            if not attributes:
+                return tag
+            if tag.endswith("/>"):
+                return tag[:-2]+" "+" ".join(attributes)+" />"
+            return tag[:-1]+" "+" ".join(attributes)+">"
+
+        return re.sub(r"<img\b[^>]*>", add_attributes, post_body, flags=re.IGNORECASE)
 
     def renderHtml(self,template,blogBase,postListJson,htmlDir,icon):
         file_loader = FileSystemLoader('templates')
@@ -149,6 +329,7 @@ class GMEEK():
         f = open(self.backup_dir+mdFileName+".md", 'r', encoding='UTF-8')
         post_body=self.markdown2html(f.read())
         f.close()
+        post_body=self.optimizePostImages(post_body)
 
         postBase=self.blogBase.copy()
 
