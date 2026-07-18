@@ -22,9 +22,9 @@ from jinja2 import Environment, FileSystemLoader
 from transliterate import translit
 from collections import OrderedDict
 ######################################################################################
-i18n={"Search":"Search","switchTheme":"switch theme","home":"home","comments":"comments","run":"run ","days":" day(s)","Previous":"Previous","Next":"Next","Archive":"Archive","published":"Published","updated":"Updated","author":"Author","wordCount":"Words","readingTime":"Reading time","minRead":"min read","related":"Related posts","previousPost":"Previous post","nextPost":"Next post","loading":"Loading","loadFailed":"Search data failed to load","noResults":"No matching posts"}
-i18nCN={"Search":"搜索","switchTheme":"切换主题","home":"首页","comments":"评论","run":"网站运行 ","days":" 天","Previous":"上一页","Next":"下一页","Archive":"归档","published":"发布于","updated":"更新于","author":"作者","wordCount":"字数","readingTime":"阅读时长","minRead":"分钟","related":"相关文章","previousPost":"上一篇","nextPost":"下一篇","loading":"正在加载文章索引…","loadFailed":"文章索引加载失败，请稍后重试。","noResults":"没有找到匹配的文章"}
-i18nRU={"Search":"Поиск","switchTheme": "Сменить тему","home":"Главная","comments":"Комментарии ","run":" работает ","days":" дней","Previous":"Предыдущая","Next":"Следующая","Archive":"Архив","published":"Опубликовано","updated":"Обновлено","author":"Автор","wordCount":"Слов","readingTime":"Время чтения","minRead":"мин","related":"Похожие записи","previousPost":"Предыдущая запись","nextPost":"Следующая запись","loading":"Загрузка…","loadFailed":"Не удалось загрузить поиск","noResults":"Ничего не найдено"}
+i18n={"Search":"Search","switchTheme":"switch theme","home":"home","comments":"comments","run":"run ","days":" day(s)","Previous":"Previous","Next":"Next","Archive":"Archive","published":"Published","updated":"Updated","author":"Author","wordCount":"Words","readingTime":"Reading time","minRead":"min read","related":"Related posts","previousPost":"Previous post","nextPost":"Next post","loading":"Loading","loadFailed":"Search data failed to load","noResults":"No matching posts","pwaUpdateAvailable":"A new site version is ready.","pwaUpdateNow":"Update now","pwaClearCache":"Clear cache and update","pwaLater":"Later"}
+i18nCN={"Search":"搜索","switchTheme":"切换主题","home":"首页","comments":"评论","run":"网站运行 ","days":" 天","Previous":"上一页","Next":"下一页","Archive":"归档","published":"发布于","updated":"更新于","author":"作者","wordCount":"字数","readingTime":"阅读时长","minRead":"分钟","related":"相关文章","previousPost":"上一篇","nextPost":"下一篇","loading":"正在加载文章索引…","loadFailed":"文章索引加载失败，请稍后重试。","noResults":"没有找到匹配的文章","pwaUpdateAvailable":"站点有新版本可用。","pwaUpdateNow":"立即更新","pwaClearCache":"清除缓存并更新","pwaLater":"稍后"}
+i18nRU={"Search":"Поиск","switchTheme": "Сменить тему","home":"Главная","comments":"Комментарии ","run":" работает ","days":" дней","Previous":"Предыдущая","Next":"Следующая","Archive":"Архив","published":"Опубликовано","updated":"Обновлено","author":"Автор","wordCount":"Слов","readingTime":"Время чтения","minRead":"мин","related":"Похожие записи","previousPost":"Предыдущая запись","nextPost":"Следующая запись","loading":"Загрузка…","loadFailed":"Не удалось загрузить поиск","noResults":"Ничего не найдено","pwaUpdateAvailable":"Доступна новая версия сайта.","pwaUpdateNow":"Обновить","pwaClearCache":"Очистить кэш и обновить","pwaLater":"Позже"}
 IconBase={
     "post":"M0 3.75C0 2.784.784 2 1.75 2h12.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 14.25 14H1.75A1.75 1.75 0 0 1 0 12.25Zm1.75-.25a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25v-8.5a.25.25 0 0 0-.25-.25ZM3.5 6.25a.75.75 0 0 1 .75-.75h7a.75.75 0 0 1 0 1.5h-7a.75.75 0 0 1-.75-.75Zm.75 2.25h4a.75.75 0 0 1 0 1.5h-4a.75.75 0 0 1 0-1.5Z",
     "link":"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z",
@@ -100,7 +100,7 @@ class GMEEK():
             print("static does not exist")
 
     def defaultConfig(self):
-        dconfig={"schemaVersion":2,"singlePage":[],"startSite":"","filingNum":"","onePageListNum":15,"commentLabelColor":"#006b75","yearColorList":["#bc4c00", "#0969da", "#1f883d", "#A333D0"],"i18n":"CN","themeMode":"manual","dayTheme":"light","nightTheme":"dark","urlMode":"pinyin","script":"","style":"","head":"","indexScript":"","indexStyle":"","bottomText":"","showPostSource":1,"iconList":{},"UTC":+8,"rssSplit":"sentence","exlink":{},"needComment":1,"allHead":"","imageCaptcha":0,"author":"","draftLabel":"draft","readingWordsPerMinute":400,"relatedPostsNum":3,"archivePage":1,"pwa":0,"pwaRecentPosts":5,"pwaAssets":[],"pwaIconSizes":"any","themeColor":"#0969da","backgroundColor":"#ffffff"}
+        dconfig={"schemaVersion":2,"singlePage":[],"startSite":"","filingNum":"","onePageListNum":15,"commentLabelColor":"#006b75","yearColorList":["#bc4c00", "#0969da", "#1f883d", "#A333D0"],"i18n":"CN","themeMode":"manual","dayTheme":"light","nightTheme":"dark","urlMode":"pinyin","script":"","style":"","head":"","indexScript":"","indexStyle":"","bottomText":"","showPostSource":1,"iconList":{},"UTC":+8,"rssSplit":"sentence","exlink":{},"needComment":1,"allHead":"","imageCaptcha":0,"author":"","draftLabel":"draft","readingWordsPerMinute":400,"relatedPostsNum":3,"archivePage":1,"pwa":0,"pwaRecentPosts":0,"pwaAssets":[],"pwaIconSizes":"any","themeColor":"#0969da","backgroundColor":"#ffffff"}
         config=json.loads(open('config.json', 'r', encoding='utf-8').read())
         self.blogBase={**dconfig,**config}.copy()
         self.blogBase["postListJson"]=json.loads('{}')
@@ -515,6 +515,16 @@ class GMEEK():
                 for item in candidates[:relatedLimit]
             ]
 
+    def postRelationshipState(self):
+        state={}
+        for number, issue in self.blogBase["postListJson"].items():
+            state[number]=json.dumps({
+                "previousPost":issue.get("previousPost"),
+                "nextPost":issue.get("nextPost"),
+                "relatedPosts":issue.get("relatedPosts", [])
+            }, ensure_ascii=False, sort_keys=True)
+        return state
+
     def createPostHtml(self,issue):
         mdFileName=re.sub(r'[<>:/\\|?*\"]|[\0-\31]', '-', issue["postTitle"])
         f = open(self.backup_dir+mdFileName+".md", 'r', encoding='UTF-8')
@@ -786,13 +796,13 @@ class GMEEK():
             [item for item in self.blogBase["postListJson"].values() if not item.get("isPreview")],
             key=lambda item:item["createdAt"],
             reverse=True
-        )[:max(0, int(self.blogBase.get("pwaRecentPosts", 5)))]
+        )[:max(0, int(self.blogBase.get("pwaRecentPosts", 0)))]
         for issue in recentPosts:
             paths.add(self.sitePath(issue["postUrl"]))
 
         configured=list(self.blogBase.get("pwaAssets", []))
         configured.extend([self.blogBase.get("avatarUrl", ""),self.blogBase.get("faviconUrl", "")])
-        for field in ("primerCSS","allHead","script","indexScript"):
+        for field in ("primerCSS","allHead"):
             configured.extend(re.findall(r"(?:src|href)\s*=\s*['\"]([^'\"]+)['\"]", str(self.blogBase.get(field, "")), flags=re.IGNORECASE))
         homeOrigin=urllib.parse.urlsplit(self.blogBase["homeUrl"]).netloc
         for asset in configured:
@@ -827,16 +837,30 @@ class GMEEK():
             manifestFile.write("\n")
 
         assets=self.pwaAssetPaths()
-        versionData=[(item["postUrl"],item["updatedAt"]) for item in self.blogBase["postListJson"].values()]
-        versionData.extend(assets)
+        versionData={"assets":assets,"manifest":manifest}
         cacheVersion=hashlib.sha256(json.dumps(versionData, sort_keys=True).encode("utf-8")).hexdigest()[:12]
-        serviceWorker="""const CACHE_NAME = {cache_name};
+        serviceWorker="""const SHELL_CACHE_NAME = {cache_name};
+const RUNTIME_CACHE_NAME = 'gmeek-runtime-v1';
+const CACHE_PREFIX = 'gmeek-';
+const RUNTIME_CACHE_LIMIT = 60;
 const PRECACHE_URLS = {assets};
 const HOME_URL = {home_url};
 
+async function trimRuntimeCache() {{
+  const cache = await caches.open(RUNTIME_CACHE_NAME);
+  const keys = await cache.keys();
+  await Promise.all(keys.slice(0, Math.max(0, keys.length - RUNTIME_CACHE_LIMIT)).map(key => cache.delete(key)));
+}}
+
+async function putRuntime(request, response) {{
+  const cache = await caches.open(RUNTIME_CACHE_NAME);
+  await cache.put(request, response);
+  await trimRuntimeCache();
+}}
+
 self.addEventListener('install', event => {{
   event.waitUntil((async () => {{
-    const cache = await caches.open(CACHE_NAME);
+    const cache = await caches.open(SHELL_CACHE_NAME);
     await Promise.all(PRECACHE_URLS.map(async url => {{
       try {{
         const response = await fetch(url, {{cache: 'reload'}});
@@ -845,16 +869,28 @@ self.addEventListener('install', event => {{
         console.warn('[Gmeek PWA] precache failed:', url);
       }}
     }}));
-    await self.skipWaiting();
   }})());
 }});
 
 self.addEventListener('activate', event => {{
   event.waitUntil((async () => {{
     const names = await caches.keys();
-    await Promise.all(names.filter(name => name.startsWith('gmeek-') && name !== CACHE_NAME).map(name => caches.delete(name)));
+    await Promise.all(names.filter(name => name.startsWith(CACHE_PREFIX) && ![SHELL_CACHE_NAME, RUNTIME_CACHE_NAME].includes(name)).map(name => caches.delete(name)));
     await self.clients.claim();
   }})());
+}});
+
+self.addEventListener('message', event => {{
+  const type = event.data && event.data.type;
+  if (type === 'SKIP_WAITING') {{
+    self.skipWaiting();
+  }} else if (type === 'CLEAR_CACHES') {{
+    event.waitUntil((async () => {{
+      const names = await caches.keys();
+      await Promise.all(names.filter(name => name.startsWith(CACHE_PREFIX) && name !== SHELL_CACHE_NAME).map(name => caches.delete(name)));
+      await self.skipWaiting();
+    }})());
+  }}
 }});
 
 self.addEventListener('fetch', event => {{
@@ -866,7 +902,7 @@ self.addEventListener('fetch', event => {{
     if (request.mode === 'navigate') {{
       try {{
         const response = await fetch(request);
-        if (response.ok) (await caches.open(CACHE_NAME)).put(request, response.clone());
+        if (response.ok) event.waitUntil(putRuntime(request, response.clone()));
         return response;
       }} catch (error) {{
         return cached || caches.match(HOME_URL);
@@ -874,13 +910,13 @@ self.addEventListener('fetch', event => {{
     }}
     if (cached) {{
       event.waitUntil(fetch(request).then(async response => {{
-        if (response.ok) (await caches.open(CACHE_NAME)).put(request, response.clone());
+        if (response.ok && ['script','style','font'].includes(request.destination)) await putRuntime(request, response.clone());
       }}).catch(() => undefined));
       return cached;
     }}
     const response = await fetch(request);
     if (response.ok && ['script','style','font'].includes(request.destination)) {{
-      (await caches.open(CACHE_NAME)).put(request, response.clone());
+      event.waitUntil(putRuntime(request, response.clone()));
     }}
     return response;
   }})());
@@ -1017,6 +1053,8 @@ self.addEventListener('fetch', event => {{
 
     def runOne(self,number_str):
         print("====== start create static html ======")
+        changedPostNum="P"+str(number_str)
+        oldRelationshipState=self.postRelationshipState()
         try:
             issue=self.repo.get_issue(int(number_str))
         except GithubException as error:
@@ -1036,10 +1074,22 @@ self.addEventListener('fetch', event => {{
             print("====== issue was deleted ======")
 
         self.preparePostRelationships()
-        for post in self.blogBase["postListJson"].values():
-            self.createPostHtml(post)
-        for singlePage in self.blogBase["singeListJson"].values():
-            self.createPostHtml(singlePage)
+        newRelationshipState=self.postRelationshipState()
+        renderPostNums={changedPostNum}
+        renderPostNums.update(
+            number for number, relationship in newRelationshipState.items()
+            if oldRelationshipState.get(number)!=relationship
+        )
+        rendered=0
+        for number, post in self.blogBase["postListJson"].items():
+            if number in renderPostNums:
+                self.createPostHtml(post)
+                rendered+=1
+        for number, singlePage in self.blogBase["singeListJson"].items():
+            if number in renderPostNums:
+                self.createPostHtml(singlePage)
+                rendered+=1
+        print("====== incrementally rendered {} page(s) ======".format(rendered))
         self.createPlistHtml()
         self.createFeedXml()
         self.createSiteFiles()

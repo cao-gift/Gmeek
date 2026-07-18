@@ -2,93 +2,119 @@
 
 ## 项目概述
 
-Gmeek 是一个围绕 GitHub Issues、GitHub Pages 和 GitHub Actions 构建的 Python 静态博客生成器。它从指定的 GitHub 仓库读取 Issues，通过 GitHub Markdown API 将 Markdown 转换为 HTML，再使用 Jinja2 渲染页面，最终把静态网站写入 `docs/`。
+Gmeek 是围绕 GitHub Issues、GitHub Pages 和 GitHub Actions 的 Python 静态博客生成器。它从指定仓库读取 Issues，经 GitHub Markdown API 将 Markdown 转为 HTML，再用 Jinja2 渲染，输出到 `docs/`。
 
-本项目不是 Web 服务应用。主要实现集中在一个 Python 脚本中，页面层由 Jinja2 模板和可选的浏览器端 JavaScript 插件组成。
+本仓库是 `cao-gift/Gmeek`（fork 自 `Meekdai/Gmeek`）。生产博客仓库通过 `config.json` 的 `GMEEK_VERSION` 克隆本仓库对应标签/提交进行构建。这里不是 Web 服务；核心逻辑集中在 `Gmeek.py`。
+
+跨仓库总览见工作区 `F:\blog\AGENTS.md`；生产站点配置与插件见 `F:\blog\cao-gift.github.io/AGENTS.md`。
 
 ## 仓库结构
 
-- `Gmeek.py`：命令行入口和全部核心生成逻辑。
-- `templates/`：生成静态网站所使用的 Jinja2 模板。
-  - `base.html`：公共 HTML 骨架、主题处理和共享区块。
-  - `plist.html`：首页和分页文章列表。
-  - `post.html`：文章页面、评论和代码复制功能。
-  - `tag.html`：浏览器端标签筛选与搜索。
-  - `footer.html`：公共页脚。
-- `plugins/`：可选的浏览器端增强功能，例如文章目录、访问统计和图片灯箱。
-- `.github/workflows/`：GitHub Pages 部署配置。
-- `img/`：README 图片和其他文档资源。
-- `requirements.txt`：Python 运行时依赖。
+- `Gmeek.py`：CLI 与全部核心生成逻辑
+- `templates/`
+  - `base.html`：公共骨架、主题、robots、PWA 注册
+  - `plist.html`：首页与分页列表
+  - `post.html`：文章页、评论、代码复制
+  - `tag.html`：标签筛选与搜索（消费 `postList.json`）
+  - `archive.html`：按年归档
+  - `footer.html`：公共页脚
+- `plugins/`：可选浏览器端增强（目录、统计、灯箱等）；具体博客可改用站点仓库 `static/plugins`
+- `.github/workflows/static.yml`：仅部署本仓库到 GitHub Pages，不执行博客构建
+- `img/`：文档图片
+- `requirements.txt`：运行时依赖（未锁版本）：PyGithub、requests、xpinyin、feedgen、Jinja2、transliterate
 
-## 入口与数据流
-
-命令行入口是 `Gmeek.py`：
+## 入口与参数
 
 ```powershell
-python Gmeek.py <github_token> <owner/repository> [--issue_number <number>]
+python Gmeek.py <github_token> <owner/repository> [--issue_number <number>] [--preview]
 ```
 
-整体生成流程如下：
+- 当前工作目录必须有 `config.json`
+- `--issue_number`：指定时走增量 `runOne`（在 `blogBase.json` 存在且 `schemaVersion` 一致时）
+- `--preview`：将请求的 open Issue（含草稿/定时）纳入 noindex 预览构建
+- `GMEEK_CACHE_DIR`：Markdown HTML 与图片尺寸等磁盘缓存目录
+- `GITHUB_WORKSPACE`：Actions 中用于回写前端 `README.md`（非 schedule、非 preview）
 
-1. 解析 GitHub Token、仓库名称和可选的 Issue 编号。
-2. 读取仓库标签，并将 `config.json` 与内置默认配置合并。
-3. 通过 `runAll()` 获取所有 Issues，或通过 `runOne()` 获取单个处于打开状态的 Issue。
-4. 将 Issue 正文保存到 `backup/`，并通过 GitHub API 转换 Markdown。
-5. 使用 `templates/` 中的模板渲染页面并写入 `docs/`。
-6. 生成 `docs/rss.xml`、`docs/postList.json` 和持久化状态文件 `blogBase.json`。
+## 配置与 schema
 
-生成后的网站入口页面是 `docs/index.html`。它属于输出产物，当前源码仓库中不保存该文件。
+`config.json` 与内置默认配置合并。默认中含 `schemaVersion`（当前生成器为 **2**）。若磁盘上 `blogBase.json` 的 `schemaVersion` 不一致，强制 `runAll()`。
 
-## 运行时输入与生成文件
+重要默认/常用字段：
 
-`Gmeek.py` 要求用户提供 `config.json`。当前源码仓库不包含该文件，因此在没有有效配置和 GitHub 凭据的情况下，生成器无法正常运行。
+- 展示：`title`、`displayTitle`、`subTitle`、`avatarUrl`、`homeUrl`、`themeMode`、`dayTheme`、`nightTheme`
+- 内容：`singlePage`、`urlMode`（`pinyin` / `issue` / `ru_translit`）、`draftLabel`、`onePageListNum`
+- 功能：`needComment`、`imageCaptcha`、`showPostSource`、`archivePage`、`relatedPostsNum`、`readingWordsPerMinute`
+- PWA：`pwa`、`pwaRecentPosts`、`pwaAssets`、`pwaIcon`、`pwaIconSizes`、`themeColor`、`backgroundColor`
+- 注入：`script`、`style`、`head`、`allHead`、`indexScript`、`indexStyle`、`primerCSS`、`exlink`、`bottomText`
+- 其他：`i18n`（CN/EN/RU）、`UTC`、`rssSplit`、`filingNum`、`startSite`、`yearColorList`、`author`
 
-除非任务明确要求修改，否则应将以下路径视为运行时输入或生成产物：
+改变 `blogBase` 或 `postList.json` 结构时，应提升 `schemaVersion`。
 
-- `config.json`：用户配置，也是必需的运行时输入。
-- `static/`：可选的用户静态资源，生成时会复制到 `docs/`。
-- `backup/`：自动生成的 Markdown 备份。
-- `docs/`：自动生成的静态网站。
-- `blogBase.json`：用于增量构建的自动生成状态文件。
+## 发布条件
 
-运行生成器时必须谨慎：全量构建会删除并重新创建 `backup/` 和 `docs/`；当设置了 `GITHUB_WORKSPACE` 且当前不是定时任务时，正常运行还会重写 `README.md`。
+`issuePublication` / `shouldIncludeIssue`：
+
+- 公开：`open` + 至少一个 Label + 非 `draftLabel` + `publishAt` 非未来且解析有效
+- 预览：`--preview` 且 Issue 编号匹配、open、至少一个 Label → `isPreview`，页面 `noindex,nofollow`
+- Issue 正文末尾 `##{json}` 可提供 `timestamp`、`updatedAt`、`publishAt`、`author`、`style`、`script`、`head`、`ogImage` 等
+
+## 数据流
+
+1. 解析参数，初始化仓库与标签，合并配置
+2. 判断全量或增量：
+   - 全量 `runAll()`：`cleanFile()` 重建目录 → 遍历 open Issues → 过滤发布条件 → 写 backup、转 HTML、渲染
+   - 增量 `runOne(n)`：先 `removePost(n)`，再按条件决定是否重新加入；删除 Issue（404/410）只移除不重建
+3. `preparePostRelationships()`：上一篇/下一篇、相关文章
+4. 渲染文章、单页、列表、标签、归档
+5. `createFeedXml`、`createRobotsTxt`、`createSitemapXml`；非预览且 `pwa=1` 时 `createPwaFiles`
+6. `writeBuildState`：写 `blogBase.json`；写精简 `docs/postList.json`（搜索字段 + `labelColorDict`）；条件更新 README
+
+### 运行时输入与产物（勿当本仓库源码长期手改）
+
+- 输入：`config.json`、可选 `static/`、可选已有 `blogBase.json`
+- 产物：`backup/`、`docs/`、`blogBase.json`；Actions 中还可能写前端 `README.md`
+
+全量构建会删除并重建 `backup/` 与 `docs/`。
+
+## 核心能力摘要
+
+- Markdown 渲染结果磁盘缓存；图片尺寸探测与缓存；图片保护属性处理
+- 字数与阅读时长；相关文章与前后篇
+- 归档页、robots、sitemap、RSS
+- PWA manifest + service worker（预缓存首页、manifest、近期文章与配置的 `pwaAssets`）
+- 草稿标签与 `publishAt` 定时发布；关闭/删除/不可发布时的增量下线
+- 搜索索引字段示例：`postTitle`、`postUrl`、`labels`、`description`、`searchText`、`createdDate`、`updatedDate`、`dateLabelColor`、`author`、`readingTime`
 
 ## 开发规范
 
-- 修改应聚焦当前需求，并保持项目轻量、低依赖的设计。
-- 修改 `Gmeek.py` 时遵循现有 Python 风格，避免对整个文件进行无关格式化。
-- 保持 UTF-8 处理方式，以及现有中文、英文和俄文国际化行为。
-- 模板逻辑必须兼容 Jinja2 和生成后的纯静态 HTML；项目没有前端打包器或前端框架。
-- 新增输出路径或 HTML 内容时，应正确转义或清理来自 Issue 标题、正文、标签及 `config.json` 的值。
-- 不要通过直接编辑生成文件来实现源码行为，应修改 `Gmeek.py`、模板或插件。
-- 不要向仓库提交密钥、真实 GitHub Token、个人配置或生成后的博客内容。
-- 修改模板时，同时考虑桌面端、移动端和全部主题模式。
-- 修改 `postList.json` 字段时，应同时更新 `Gmeek.py` 中的数据生产逻辑及所有消费方，尤其是 `templates/tag.html`。
+- 改动聚焦需求，保持轻量、低依赖
+- 修改 `Gmeek.py` 时遵循现有风格，避免无关全文件格式化
+- 保持 UTF-8 与中/英/俄 i18n 行为
+- 模板须兼容 Jinja2 与纯静态输出；无前端打包器
+- 新增输出或 HTML 字段时正确转义 Issue/配置来源值；仅在明确允许处输出原始 HTML
+- 不要提交密钥、真实 Token、个人生产配置或生成后的博客内容到本仓库
+- 改模板时兼顾桌面/移动与主题模式，并考虑生产站自定义插件的注入方式
+- 改 `postList.json` 字段时同步生产逻辑与所有消费方（尤其 `templates/tag.html`），并评估 `schemaVersion`
 
 ## 验证方式
 
-当前项目没有自动化测试套件。根据改动范围选择最小且安全的检查方式：
+无自动化测试套件。最小检查：
 
 ```powershell
-python -m py_compile Gmeek.py
+python -c "import ast, pathlib; ast.parse(pathlib.Path('Gmeek.py').read_text(encoding='utf-8')); print('ast ok')"
+python -c "import github, requests, xpinyin, feedgen, jinja2, transliterate; print('imports ok')"
 ```
 
-在已安装依赖的环境中，可以检查依赖导入：
+生成器或模板改动应使用一次性测试仓库与测试配置，不要用生产凭据。至少检查：
 
-```powershell
-python -c "import github, requests, xpinyin, feedgen, jinja2, transliterate"
-```
+- `docs/index.html`、至少一篇 `docs/post/*.html`
+- `docs/tag.html`、`docs/archive.html`（若开启）
+- `docs/postList.json`、`docs/rss.xml`
+- `docs/robots.txt`、`docs/sitemap.xml`
+- PWA 开启时的 `manifest.webmanifest`、`sw.js`
 
-对于生成器或模板改动，应使用一次性的测试仓库和测试配置进行验证，不要使用生产凭据。至少检查以下产物：
-
-- `docs/index.html`
-- 至少一个生成的 `docs/post/*.html` 文章页面
-- `docs/tag.html`
-- `docs/postList.json`
-- `docs/rss.xml`
-
-如果改动涉及共享状态或文章元数据，还应分别验证全量生成和单 Issue 增量生成是否符合预期。
+涉及发布条件、下线、草稿、定时、置顶、搜索索引或元数据时，分别验证 `runAll` 与 `runOne`，并在需要时验证 `--preview`。
 
 ## 部署说明
 
-当前 `.github/workflows/static.yml` 工作流只负责将仓库内容部署到 GitHub Pages，并不会调用 `Gmeek.py`。不要假设当前源码仓库包含 README 所述的 Issue 触发生成工作流；处理自动化相关任务时，应检查目标博客仓库或模板仓库中的实际配置。
+本仓库 `static.yml` 只部署仓库自身内容到 GitHub Pages，**不会**调用 `Gmeek.py` 构建博客。生产博客的生成与部署在目标博客仓库（如 `cao-gift.github.io`）的 Actions 中完成。修改生成器后需推送到生产实际克隆的远程，并更新博客侧 `GMEEK_VERSION` 或等待 `last` 指向包含改动的标签。
