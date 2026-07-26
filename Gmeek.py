@@ -6,6 +6,9 @@ import time
 import datetime
 import shutil
 import urllib
+import urllib.parse
+import socket
+import ipaddress
 import requests
 import argparse
 import html
@@ -343,6 +346,95 @@ class GMEEK():
             if os.path.exists(temp_file):
                 os.remove(temp_file)
 
+    def isBlockedImageFetchIp(self, ip_obj):
+        return (
+            ip_obj.is_private
+            or ip_obj.is_loopback
+            or ip_obj.is_link_local
+            or ip_obj.is_multicast
+            or ip_obj.is_reserved
+            or ip_obj.is_unspecified
+        )
+
+    def isSafeImageFetchUrl(self, url):
+        try:
+            parsed=urllib.parse.urlparse(url)
+        except ValueError:
+            return False
+
+        if parsed.scheme.lower()!="https":
+            return False
+        if parsed.username or parsed.password:
+            return False
+        if parsed.port not in (None, 443):
+            return False
+
+        host=parsed.hostname
+        if not host:
+            return False
+
+        try:
+            ip_obj=ipaddress.ip_address(host)
+        except ValueError:
+            ip_obj=None
+
+        if ip_obj is not None:
+            return not self.isBlockedImageFetchIp(ip_obj)
+
+        try:
+            addrinfo=socket.getaddrinfo(host, None)
+        except socket.gaierror:
+            return False
+
+        resolved=False
+        for info in addrinfo:
+            try:
+                candidate=ipaddress.ip_address(info[4][0])
+            except (ValueError, TypeError, IndexError):
+                continue
+            resolved=True
+            if self.isBlockedImageFetchIp(candidate):
+                return False
+        return resolved
+
+    def fetchImageProbeBytes(self, url, max_bytes=262144, max_redirects=3):
+        current=url
+        for _ in range(max_redirects+1):
+            if not self.isSafeImageFetchUrl(current):
+                return None
+
+            response=None
+            try:
+                response=requests.get(
+                    current,
+                    headers={"Range":"bytes=0-{}".format(max_bytes-1), "Accept-Encoding":"identity"},
+                    stream=True,
+                    timeout=(3, 8),
+                    allow_redirects=False,
+                )
+                if response.is_redirect or response.status_code in (301, 302, 303, 307, 308):
+                    location=response.headers.get("Location")
+                    if not location:
+                        return None
+                    current=urllib.parse.urljoin(current, location)
+                    continue
+
+                response.raise_for_status()
+                data=b""
+                for chunk in response.iter_content(chunk_size=32768):
+                    if not chunk:
+                        continue
+                    data+=chunk
+                    if len(data)>=max_bytes:
+                        break
+                return data
+            except requests.RequestException:
+                return None
+            finally:
+                if response is not None:
+                    response.close()
+        return None
+
     def getImageDimensions(self, urls):
         for url in urls:
             cached=self.getCachedImageDimensions(url)
@@ -350,28 +442,14 @@ class GMEEK():
                 return cached
 
         for url in urls:
-            if not re.match(r"^https?://", url, flags=re.IGNORECASE):
+            data=self.fetchImageProbeBytes(url)
+            if not data:
                 continue
-            try:
-                with requests.get(
-                    url,
-                    headers={"Range":"bytes=0-262143", "Accept-Encoding":"identity"},
-                    stream=True,
-                    timeout=(3, 8)
-                ) as response:
-                    response.raise_for_status()
-                    data=b""
-                    for chunk in response.iter_content(chunk_size=32768):
-                        data+=chunk
-                        if len(data)>=262144:
-                            break
-                dimensions=self.imageDimensionsFromBytes(data)
-                if dimensions and dimensions[0]>0 and dimensions[1]>0:
-                    for candidate in urls:
-                        self.cacheImageDimensions(candidate, dimensions)
-                    return dimensions
-            except requests.RequestException:
-                continue
+            dimensions=self.imageDimensionsFromBytes(data)
+            if dimensions and dimensions[0]>0 and dimensions[1]>0:
+                for candidate in urls:
+                    self.cacheImageDimensions(candidate, dimensions)
+                return dimensions
         return None
 
     def optimizePostImages(self, post_body):
