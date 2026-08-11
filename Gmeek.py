@@ -204,10 +204,16 @@ class GMEEK():
         return {}, body
 
     def plainText(self, markdown):
+        def imageAltText(match):
+            # 丢弃空 alt 与 "image.jpg" 之类的文件名占位，避免污染摘要/搜索索引
+            alt=match.group(1).strip()
+            if not alt or re.search(r"\.(png|jpe?g|gif|webp|bmp|svg|avif)$", alt, flags=re.IGNORECASE):
+                return " "
+            return alt
         text=re.sub(r"```[^\r\n]*[\r\n]?", " ", markdown or "")
         text=text.replace("```", " ")
         text=re.sub(r"`([^`]*)`", r"\1", text)
-        text=re.sub(r"!\[([^\]]*)\]\([^)]*\)", r"\1", text)
+        text=re.sub(r"!\[([^\]]*)\]\([^)]*\)", imageAltText, text)
         text=re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", text)
         text=re.sub(r"<[^>]+>", " ", text)
         text=re.sub(r"^\s{0,3}(?:#{1,6}|>|[-+*]|\d+[.)])\s*", "", text, flags=re.MULTILINE)
