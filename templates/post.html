@@ -128,15 +128,12 @@
 document.getElementById("pathHome").setAttribute("d",IconList["home"]);
 {% if blogBase['archivePage']==1 %}document.getElementById("pathArchive").setAttribute("d",IconList["archive"]);{% endif %}
 {% if blogBase['showPostSource']==1 %}document.getElementById("pathIssue").setAttribute("d",IconList["github"]);{% endif %}
-{% if blogBase['needComment']==1 and blogBase['commentNum']>0 -%}
-    cmButton=document.getElementById("cmButton");
-    span=document.createElement("span");
-    span.setAttribute("class","Counter");
-    span.innerHTML="{{ blogBase['commentNum'] }}";
-    cmButton.appendChild(span);
-{%- endif %}
-
 {% if blogBase['needComment']==1 %}
+function loadCommentsFailed(){
+    cmButton=document.getElementById("cmButton");
+    cmButton.innerHTML="{{ i18n['comments'] }}";
+    cmButton.disabled=false;
+}
 function openComments(){
     cm=document.getElementById("comments");
     cmButton=document.getElementById("cmButton");
@@ -146,34 +143,34 @@ function openComments(){
     span.setAttribute("class","AnimatedEllipsis");
     cmButton.appendChild(span);
 
-    script=document.createElement("script");
-    script.setAttribute("src","https://utteranc.es/client.js");
-    script.setAttribute("repo","{{ blogBase['repoName'] }}");
-    script.setAttribute("issue-term","title");
-    {% if blogBase['themeMode']=='manual' %}
-    if(localStorage.getItem("meek_theme")=="dark"){script.setAttribute("theme","dark-blue");}
-    else if(localStorage.getItem("meek_theme")=="light") {script.setAttribute("theme","github-light");}
-    else{script.setAttribute("theme","preferred-color-scheme");}
+    {% if not blogBase['twikooEnvId'] %}
+    // 未配置 twikooEnvId：提示后恢复按钮，避免评论区静默失败
+    // eslint-disable-next-line no-console
+    console.error("[Gmeek] 未配置 twikooEnvId，评论无法加载");
+    loadCommentsFailed();
+    return;
     {% else %}
-    script.setAttribute("theme","{{ blogBase['nightTheme'] }}");
-    {% endif %}
-    script.setAttribute("crossorigin","anonymous");
-    script.setAttribute("async","");
-    cm.appendChild(script);
-
-    int=self.setInterval("iFrameLoading()",200);
-}
-
-function iFrameLoading(){
-    var utterances=document.getElementsByClassName('utterances');
-    if(utterances.length==1){
-        if(utterances[0].style.height!=""){
-            utterancesLoad=1;
-            int=window.clearInterval(int);
+    script=document.createElement("script");
+    script.setAttribute("src","https://cdn.jsdelivr.net/npm/twikoo@1.7.15/dist/twikoo.min.js");
+    script.onload=function(){
+        if(window.twikoo){
+            twikoo.init({
+                envId: {{ blogBase['twikooEnvId']|tojson }},
+                el: "#comments",
+                lang: "zh-CN"
+            });
             document.getElementById("cmButton").style.display="none";
-            console.log("utterances Load OK");
+        }else{
+            loadCommentsFailed();
         }
-    }
+    };
+    script.onerror=function(){
+        // eslint-disable-next-line no-console
+        console.error("[Gmeek] Twikoo 脚本加载失败，请重试");
+        loadCommentsFailed();
+    };
+    document.head.appendChild(script);
+    {% endif %}
 }
 {%- endif %}
 
