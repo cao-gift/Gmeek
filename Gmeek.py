@@ -103,7 +103,7 @@ class GMEEK():
             print("static does not exist")
 
     def defaultConfig(self):
-        dconfig={"schemaVersion":2,"singlePage":[],"startSite":"","filingNum":"","onePageListNum":15,"commentLabelColor":"#006b75","yearColorList":["#bc4c00", "#0969da", "#1f883d", "#A333D0"],"i18n":"CN","themeMode":"manual","dayTheme":"light","nightTheme":"dark","urlMode":"pinyin","script":"","style":"","head":"","indexScript":"","indexStyle":"","bottomText":"","showPostSource":1,"iconList":{},"UTC":+8,"rssSplit":"sentence","exlink":{},"needComment":1,"twikooEnvId":"","twikooCDN":"https://cdn.jsdelivr.net/npm/twikoo@1.7.15/dist/twikoo.min.js","allHead":"","imageCaptcha":0,"author":"","draftLabel":"draft","readingWordsPerMinute":400,"relatedPostsNum":3,"archivePage":1,"pwa":0,"pwaRecentPosts":0,"pwaAssets":[],"pwaIconSizes":"any","themeColor":"#0969da","backgroundColor":"#ffffff"}
+        dconfig={"schemaVersion":2,"singlePage":[],"startSite":"","filingNum":"","onePageListNum":15,"commentLabelColor":"#006b75","yearColorList":["#bc4c00", "#0969da", "#1f883d", "#A333D0"],"i18n":"CN","themeMode":"manual","dayTheme":"light","nightTheme":"dark","urlMode":"pinyin","script":"","style":"","head":"","indexScript":"","indexStyle":"","bottomText":"","showPostSource":1,"iconList":{},"UTC":+8,"rssSplit":"sentence","exlink":{},"needComment":1,"twikooEnvId":"","twikooCDN":"https://cdn.jsdelivr.net/npm/twikoo@1.7.15/dist/twikoo.min.js","allHead":"","author":"","draftLabel":"draft","readingWordsPerMinute":400,"relatedPostsNum":3,"archivePage":1,"pwa":0,"pwaRecentPosts":0,"pwaAssets":[],"pwaIconSizes":"any","themeColor":"#0969da","backgroundColor":"#ffffff"}
         config=json.loads(open('config.json', 'r', encoding='utf-8').read())
         self.blogBase={**dconfig,**config}.copy()
         self.blogBase["postListJson"]=json.loads('{}')
@@ -518,44 +518,6 @@ class GMEEK():
 
         return re.sub(r"<img\b[^>]*>", add_attributes, post_body, flags=re.IGNORECASE)
 
-    def protectPostImages(self, post_body):
-        tiny_pixel="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
-
-        def get_attr(tag, name):
-            match=re.search(r"\s"+re.escape(name)+r"\s*=\s*([\"'])(.*?)\1", tag, flags=re.IGNORECASE|re.DOTALL)
-            return html.unescape(match.group(2)) if match else ""
-
-        def remove_attr(tag, name):
-            pattern=r"\s+"+re.escape(name)+r"\s*=\s*(?:\"[^\"]*\"|'[^']*'|[^\s>]+)"
-            return re.sub(pattern, "", tag, flags=re.IGNORECASE|re.DOTALL)
-
-        def protect_image(match):
-            tag=match.group(0)
-            original_src=(
-                get_attr(tag, "data-esa-orig-src")
-                or get_attr(tag, "data-canonical-src")
-                or get_attr(tag, "src")
-            )
-            original_srcset=get_attr(tag, "data-esa-orig-srcset") or get_attr(tag, "srcset")
-
-            for name in ("src", "srcset", "data-esa-orig-src", "data-esa-orig-srcset", "data-esa-img-locked"):
-                tag=remove_attr(tag, name)
-
-            attributes=[
-                'src="{}"'.format(tiny_pixel),
-                'data-esa-img-locked="1"'
-            ]
-            if original_src:
-                attributes.append('data-esa-orig-src="{}"'.format(html.escape(original_src, quote=True)))
-            if original_srcset:
-                attributes.append('data-esa-orig-srcset="{}"'.format(html.escape(original_srcset, quote=True)))
-
-            if tag.endswith("/>"):
-                return tag[:-2]+" "+" ".join(attributes)+" />"
-            return tag[:-1]+" "+" ".join(attributes)+">"
-
-        return re.sub(r"<img\b[^>]*>", protect_image, post_body, flags=re.IGNORECASE)
-
     def renderHtml(self,template,blogBase,postListJson,htmlDir,icon):
         file_loader = FileSystemLoader('templates')
         env = Environment(loader=file_loader)
@@ -645,13 +607,6 @@ class GMEEK():
             post_body = re.sub(r'<code class="notranslate">Gmeek-html(.*?)</code>', lambda match: html.unescape(match.group(1)), post_body, flags=re.DOTALL)
 
         post_body=self.optimizePostImages(post_body)
-        protect_images=(
-            self.blogBase.get("imageCaptcha", 0)==1
-            and not issue.get("isSinglePage", False)
-        )
-        if protect_images:
-            post_body=self.protectPostImages(post_body)
-
         isSinglePage=issue.get("isSinglePage", False)
         postBase["isArticle"]=not isSinglePage
         postBase["isPreview"]=issue.get("isPreview", False)

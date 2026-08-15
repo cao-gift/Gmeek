@@ -43,7 +43,7 @@ python Gmeek.py <github_token> <owner/repository> [--issue_number <number>] [--p
 
 - 展示：`title`、`displayTitle`、`subTitle`、`avatarUrl`、`homeUrl`、`themeMode`、`dayTheme`、`nightTheme`
 - 内容：`singlePage`、`urlMode`（`pinyin` / `issue` / `ru_translit`）、`draftLabel`、`onePageListNum`
-- 功能：`needComment`、`imageCaptcha`、`showPostSource`、`archivePage`、`relatedPostsNum`、`readingWordsPerMinute`
+- 功能：`needComment`、`showPostSource`、`archivePage`、`relatedPostsNum`、`readingWordsPerMinute`
 - PWA：`pwa`、`pwaRecentPosts`、`pwaAssets`、`pwaIcon`、`pwaIconSizes`、`themeColor`、`backgroundColor`
 - 注入：`script`、`style`、`head`、`allHead`、`indexScript`、`indexStyle`、`primerCSS`、`exlink`、`bottomText`
 - 其他：`i18n`（CN/EN/RU）、`UTC`、`rssSplit`、`filingNum`、`startSite`、`yearColorList`、`author`
@@ -78,7 +78,7 @@ python Gmeek.py <github_token> <owner/repository> [--issue_number <number>] [--p
 
 ## 核心能力摘要
 
-- Markdown 渲染结果磁盘缓存；图片尺寸探测与缓存；图片保护属性处理
+- Markdown 渲染结果磁盘缓存；图片尺寸探测与缓存
 - 字数与阅读时长；相关文章与前后篇
 - 归档页、robots、sitemap、RSS
 - PWA manifest + service worker（预缓存首页、manifest、近期文章与配置的 `pwaAssets`）
