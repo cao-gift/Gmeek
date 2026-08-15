@@ -39,7 +39,6 @@
 .relatedPosts{margin-top:32px;}
 .relatedPosts h2{font-size:20px;margin-bottom:12px;}
 .relatedPosts ul{display:grid;gap:8px;list-style:none;}
-#cmButton{height:48px;margin-top:48px;}
 #comments{margin-top:64px;}
 .g-emoji{font-size:24px;}
 @media (max-width: 600px) {
@@ -118,7 +117,6 @@
 {% endif %}
 {% endif %}
 {% if blogBase['needComment']==1 %}
-<button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">{{ i18n['comments'] }}</button>
 <div class="comments" id="comments"></div>
 {% endif %}
 {% endblock %}
@@ -129,49 +127,27 @@ document.getElementById("pathHome").setAttribute("d",IconList["home"]);
 {% if blogBase['archivePage']==1 %}document.getElementById("pathArchive").setAttribute("d",IconList["archive"]);{% endif %}
 {% if blogBase['showPostSource']==1 %}document.getElementById("pathIssue").setAttribute("d",IconList["github"]);{% endif %}
 {% if blogBase['needComment']==1 %}
-function loadCommentsFailed(){
-    cmButton=document.getElementById("cmButton");
-    cmButton.innerHTML="{{ i18n['comments'] }}";
-    cmButton.disabled=false;
-}
-function openComments(){
-    cm=document.getElementById("comments");
-    cmButton=document.getElementById("cmButton");
-    cmButton.disabled=true;
-    cmButton.innerHTML="loading";
-    span=document.createElement("span");
-    span.setAttribute("class","AnimatedEllipsis");
-    cmButton.appendChild(span);
-
-    {% if not blogBase['twikooEnvId'] %}
-    // 未配置 twikooEnvId：提示后恢复按钮，避免评论区静默失败
-    // eslint-disable-next-line no-console
-    console.error("[Gmeek] 未配置 twikooEnvId，评论无法加载");
-    loadCommentsFailed();
-    return;
-    {% else %}
-    script=document.createElement("script");
-    script.setAttribute("src","https://cdn.jsdelivr.net/npm/twikoo@1.7.15/dist/twikoo.min.js");
-    script.onload=function(){
-        if(window.twikoo){
-            twikoo.init({
-                envId: {{ blogBase['twikooEnvId']|tojson }},
-                el: "#comments",
-                lang: "zh-CN"
-            });
-            document.getElementById("cmButton").style.display="none";
-        }else{
-            loadCommentsFailed();
-        }
-    };
-    script.onerror=function(){
-        // eslint-disable-next-line no-console
-        console.error("[Gmeek] Twikoo 脚本加载失败，请重试");
-        loadCommentsFailed();
-    };
-    document.head.appendChild(script);
-    {% endif %}
-}
+{% if not blogBase['twikooEnvId'] %}
+console.error("[Gmeek] 未配置 twikooEnvId，评论无法加载");
+{% else %}
+const commentScript=document.createElement("script");
+commentScript.setAttribute("src","https://cdn.jsdelivr.net/npm/twikoo@1.7.15/dist/twikoo.min.js");
+commentScript.onload=function(){
+    if(!window.twikoo){
+        console.error("[Gmeek] Twikoo 初始化失败");
+        return;
+    }
+    twikoo.init({
+        envId: {{ blogBase['twikooEnvId']|tojson }},
+        el: "#comments",
+        lang: "zh-CN"
+    });
+};
+commentScript.onerror=function(){
+    console.error("[Gmeek] Twikoo 脚本加载失败，请刷新页面重试");
+};
+document.head.appendChild(commentScript);
+{% endif %}
 {%- endif %}
 
 {% if blogBase['highlight']!=0 -%}
