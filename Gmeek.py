@@ -652,13 +652,13 @@ class GMEEK():
             postBase["bottomText"]=''
 
         if '<pre class="notranslate">' in post_body:
-            keys=['sun','moon','sync','home','github','copy','check']
+            keys=['sun','moon','sync','home','search','github','copy','check','link']
             if '<div class="highlight' in post_body:
                 postBase["highlight"]=1
             else:
                 postBase["highlight"]=2
         else:
-            keys=['sun','moon','sync','home','github']
+            keys=['sun','moon','sync','home','search','github','link']
             postBase["highlight"]=0
 
         if self.blogBase.get("archivePage", 1)==1:
@@ -673,9 +673,9 @@ class GMEEK():
         for fileName in os.listdir(self.root_dir):
             if re.match(r"^page\d+\.html$", fileName):
                 os.remove(os.path.join(self.root_dir, fileName))
-        keys=list(OrderedDict.fromkeys(['sun', 'moon','sync', 'search', 'rss', 'upload', 'post', 'archive'] + self.blogBase["singlePage"]))
+        keys=list(OrderedDict.fromkeys(['sun', 'moon','sync', 'home', 'search', 'rss', 'upload', 'post', 'archive', 'link'] + self.blogBase["singlePage"]))
         plistIcon={**dict(zip(keys, map(IconBase.get, keys))),**self.blogBase["iconList"]}
-        keys=['sun','moon','sync','home','search','post','archive']
+        keys=['sun','moon','sync','home','search','post','archive','link']
         tagIcon=dict(zip(keys, map(IconBase.get, keys)))
         self.blogBase["robots"]="noindex,nofollow" if self.blogBase.get("previewMode") else "index,follow"
 

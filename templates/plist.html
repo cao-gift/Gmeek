@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'navigation.html' import site_navigation with context %}
 {% block head %}
 <meta name="description" content="{{ blogBase['subTitle']|e }}">
 <meta property="og:title" content="{{ blogBase['title']|e }}">
@@ -20,7 +21,6 @@
 .title-left a{color:inherit;text-decoration:none;vertical-align: bottom;font-size:40px;font-weight: bold;font-family:Monaco;margin-left:8px;}
 .siteTitle{margin:0;line-height:1;}
 .title-right{display:flex;margin:auto 0 0 auto;}
-.title-right button{margin-right:8px;padding:16px;}
 .title-right .circle{padding: 14px 16px;}
 
 .SideNav{min-width: 360px;}
@@ -54,42 +54,7 @@
     </h1>
 </div>
 <div class="title-right">
-    <a href="{{ blogBase['homeUrl'] }}/tag.html" id="buttonSearch" class="btn btn-invisible circle" title="{{ i18n['Search'] }}" aria-label="{{ i18n['Search'] }}">
-        <svg class="octicon" width="16" height="16" aria-hidden="true">
-            <path id="pathSearch" fill-rule="evenodd"></path>
-        </svg>
-    </a>
-    {% if blogBase['archivePage']==1 %}
-    <a href="{{ blogBase['homeUrl'] }}/archive.html" id="buttonArchive" class="btn btn-invisible circle" title="{{ i18n['Archive'] }}" aria-label="{{ i18n['Archive'] }}">
-        <svg class="octicon" width="16" height="16" aria-hidden="true">
-            <path id="pathArchive" fill-rule="evenodd"></path>
-        </svg>
-    </a>
-    {% endif %}
-    {% for key, value in blogBase['exlink'].items() -%}
-    <a href="{{ value }}" class="btn btn-invisible circle" title="{{ key }}" aria-label="{{ key }}" target="_blank" rel="noopener noreferrer">
-        <svg class="octicon" width="16" height="16" aria-hidden="true">
-            <path id="{{ key }}" fill-rule="evenodd"></path>
-        </svg>
-    </a>
-    {%- endfor %}
-    {% for num in blogBase['singeListJson'] -%}
-    <a href="{{ blogBase['homeUrl'] }}/{{ blogBase['singeListJson'][num]['labels'][0] }}.html" class="btn btn-invisible circle" title="{{ blogBase['singeListJson'][num]['postTitle'] }}" aria-label="{{ blogBase['singeListJson'][num]['postTitle'] }}">
-        <svg class="octicon" width="16" height="16" aria-hidden="true">
-            <path id="{{ blogBase['singeListJson'][num]['postTitle'] }}" fill-rule="evenodd"></path>
-        </svg>
-    </a>
-    {%- endfor %}
-    <a href="{{ blogBase['homeUrl'] }}/rss.xml" target="_blank" rel="noopener noreferrer" id="buttonRSS" class="btn btn-invisible circle" title="RSS" aria-label="RSS">
-        <svg class="octicon" width="16" height="16" aria-hidden="true">
-            <path id="pathRSS" fill-rule="evenodd"></path>
-        </svg>
-    </a>
-    <button class="btn btn-invisible circle" type="button" onclick="modeSwitch()" title="{{ i18n['switchTheme'] }}" aria-label="{{ i18n['switchTheme'] }}" {%- if blogBase['themeMode']=='fix' -%}style="display:none;"{%- endif -%}>
-        <svg class="octicon" width="16" height="16" aria-hidden="true">
-            <path id="themeSwitch" fill-rule="evenodd"></path>
-        </svg>
-    </button>
+    {{ site_navigation('home', showExtras=true) }}
 </div>
 {% endblock %}
 
@@ -135,9 +100,6 @@
 
 {% block script %}
 <script>
-document.getElementById("pathSearch").setAttribute("d",IconList["search"]);
-document.getElementById("pathRSS").setAttribute("d",IconList["rss"]);
-{% if blogBase['archivePage']==1 %}document.getElementById("pathArchive").setAttribute("d",IconList["archive"]);{% endif %}
 iconTOP=document.getElementsByClassName("svgTop1");
 iconPost=document.getElementsByClassName("svgTop0");
 for(var i=0;i<iconTOP.length;i++){
@@ -147,14 +109,6 @@ for(var i=0;i<iconTOP.length;i++){
 for(var i=0;i<iconPost.length;i++){
     iconPost[i].setAttribute("d",IconList["post"]);
 }
-
-{% for key, value in blogBase['exlink'].items() %}
-document.getElementById("{{ key }}").setAttribute("d",value=IconList["{{ key }}"]);
-{%- endfor %}
-
-{% for num in blogBase['singeListJson'] -%}
-document.getElementById("{{ blogBase['singeListJson'][num]['postTitle'] }}").setAttribute("d",value=IconList["{{ blogBase['singeListJson'][num]['labels'][0] }}"]);
-{%- endfor %}
 </script>
 {{ blogBase['indexScript'] }}
 {% endblock %}

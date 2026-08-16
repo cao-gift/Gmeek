@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'navigation.html' import site_navigation with context %}
 {% block head %}
 <meta name="description" content="{{ blogBase['title']|e }} search page">
 <title>{{ blogBase['title']|e }} - {{ i18n['Search'] }}</title>
@@ -8,7 +9,7 @@
 <style>
 .tagTitle{margin:auto 0;font-size:40px;font-weight:bold;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
 .title-right{display:flex;margin:auto 0 0 auto;}
-.title-right .circle{padding: 14px 16px;margin-right:8px;}
+.title-right .circle{padding:14px 16px;}
 
 .subnav-search{width:320px;margin-top:8px;margin-right:8px;display:flex;align-items:stretch;}
 .subnav-search-input{width:auto;min-width:0;flex:1 1 auto;border-top-right-radius:0;border-bottom-right-radius:0;}
@@ -41,24 +42,10 @@
         <input id="siteSearch" name="q" type="search" class="form-control subnav-search-input" aria-label="{{ i18n['Search'] }}" autocomplete="off" value="">
         <button class="btn search-submit" type="submit">{{ i18n['Search'] }}</button>
         <svg class="subnav-search-icon octicon octicon-search" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-            <path id="searchSVG" fill-rule="evenodd"></path>
+            <path data-nav-icon="search" fill-rule="evenodd"></path>
         </svg>
     </form>
-    <a href="{{ blogBase['homeUrl'] }}" id="buttonHome" class="btn btn-invisible circle" title="{{ i18n['home'] }}" aria-label="{{ i18n['home'] }}">
-        <svg class="octicon" width="16" height="16" aria-hidden="true">
-            <path id="pathHome" fill-rule="evenodd"></path>
-        </svg>
-    </a>
-    {% if blogBase['archivePage']==1 %}
-    <a href="{{ blogBase['homeUrl'] }}/archive.html" class="btn btn-invisible circle" title="{{ i18n['Archive'] }}" aria-label="{{ i18n['Archive'] }}">
-        <svg class="octicon" width="16" height="16" aria-hidden="true"><path id="pathArchive" fill-rule="evenodd"></path></svg>
-    </a>
-    {% endif %}
-    <button class="btn btn-invisible circle" type="button" onclick="modeSwitch()" title="{{ i18n['switchTheme'] }}" aria-label="{{ i18n['switchTheme'] }}" {%- if blogBase['themeMode']=='fix' -%}style="display:none;"{%- endif -%}>
-        <svg class="octicon" width="16" height="16" aria-hidden="true">
-            <path id="themeSwitch" fill-rule="evenodd"></path>
-        </svg>
-    </button>
+    {{ site_navigation('search') }}
 </div>
 {% endblock %}
 
@@ -70,10 +57,6 @@
 
 {% block script %}
 <script>
-document.getElementById("pathHome").setAttribute("d",IconList["home"]);
-document.getElementById("searchSVG").setAttribute("d",IconList["search"]);
-{% if blogBase['archivePage']==1 %}document.getElementById("pathArchive").setAttribute("d",IconList["archive"]);{% endif %}
-
 const SEARCH_UI={
     search:{{ i18n['Search']|tojson }},
     noResults:{{ i18n['noResults']|tojson }},

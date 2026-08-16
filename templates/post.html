@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'navigation.html' import site_navigation with context %}
 
 {% block head %}
 <meta name="description" content="{{ blogBase['description']|e }}">
@@ -28,7 +29,7 @@
 <style>
 .postTitle{margin: auto 0;font-size:40px;font-weight:bold;}
 .title-right{display:flex;margin:auto 0 0 auto;}
-.title-right .circle{padding: 14px 16px;margin-right:8px;}
+.title-right .circle{padding:14px 16px;}
 #postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
 #postBody hr{height:2px;}
 .postMeta{display:flex;flex-wrap:wrap;gap:6px 16px;margin:-4px 0 20px;color:var(--fgColor-muted,var(--color-fg-muted));font-size:14px;}
@@ -66,30 +67,7 @@
 {% block header %}
 <h1 class="postTitle">{{ blogBase['postTitle']|e }}</h1>
 <div class="title-right">
-    <a href="{{ blogBase['homeUrl'] }}" id="buttonHome" class="btn btn-invisible circle" title="{{ i18n['home'] }}" aria-label="{{ i18n['home'] }}">
-        <svg class="octicon" width="16" height="16" aria-hidden="true">
-            <path id="pathHome" fill-rule="evenodd"></path>
-        </svg>
-    </a>
-    {% if blogBase['archivePage']==1 %}
-    <a href="{{ blogBase['homeUrl'] }}/archive.html" class="btn btn-invisible circle" title="{{ i18n['Archive'] }}" aria-label="{{ i18n['Archive'] }}">
-        <svg class="octicon" width="16" height="16" aria-hidden="true"><path id="pathArchive" fill-rule="evenodd"></path></svg>
-    </a>
-    {% endif %}
-    {% if blogBase['showPostSource']==1 %}
-    <a href="{{ blogBase['postSourceUrl'] }}" target="_blank" rel="noopener noreferrer" class="btn btn-invisible circle" title="Issue" aria-label="Issue">
-        <svg class="octicon" width="16" height="16" aria-hidden="true">
-            <path id="pathIssue" fill-rule="evenodd"></path>
-        </svg>
-    </a>
-    {% endif %}
-
-    <button class="btn btn-invisible circle" type="button" onclick="modeSwitch();" title="{{ i18n['switchTheme'] }}" aria-label="{{ i18n['switchTheme'] }}" {%- if blogBase['themeMode']=='fix' -%}style="display:none;"{%- endif -%}>
-        <svg class="octicon" width="16" height="16" aria-hidden="true">
-            <path id="themeSwitch" fill-rule="evenodd"></path>
-        </svg>
-    </button>
-
+    {{ site_navigation(showIssue=true) }}
 </div>
 {% endblock %}
 
@@ -123,9 +101,6 @@
 
 {% block script %}
 <script>
-document.getElementById("pathHome").setAttribute("d",IconList["home"]);
-{% if blogBase['archivePage']==1 %}document.getElementById("pathArchive").setAttribute("d",IconList["archive"]);{% endif %}
-{% if blogBase['showPostSource']==1 %}document.getElementById("pathIssue").setAttribute("d",IconList["github"]);{% endif %}
 {% if blogBase['needComment']==1 %}
 {% if not blogBase['twikooEnvId'] %}
 console.error("[Gmeek] 未配置 twikooEnvId，评论无法加载");
