@@ -39,7 +39,7 @@
 <div class="title-right">
     <form class="subnav-search" role="search" onsubmit="event.preventDefault();searchShow();">
         <label class="sr-only" for="siteSearch">{{ i18n['Search'] }}</label>
-        <input id="siteSearch" name="q" type="search" class="form-control subnav-search-input" aria-label="{{ i18n['Search'] }}" autocomplete="off" value="">
+        <input id="siteSearch" name="q" type="search" class="form-control subnav-search-input" aria-label="{{ i18n['Search'] }}" placeholder="{% if blogBase['i18n']=='CN' %}搜索文章标题或标签{% else %}{{ i18n['Search'] }}{% endif %}" autocomplete="off" value="">
         <button class="btn search-submit" type="submit">{{ i18n['Search'] }}</button>
         <svg class="subnav-search-icon octicon octicon-search" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
             <path data-nav-icon="search" fill-rule="evenodd"></path>
@@ -86,7 +86,7 @@ function createPostItem(post){
     item.className='SideNav-item d-flex flex-items-center flex-justify-between';
     item.href=post.postUrl;
     const center=document.createElement('div');
-    center.className='d-flex flex-items-center';
+    center.className='d-flex flex-items-center listLead';
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
     svg.setAttribute('class','SideNav-icon octicon');
     svg.setAttribute('width','16');
@@ -94,10 +94,17 @@ function createPostItem(post){
     const path=document.createElementNS('http://www.w3.org/2000/svg','path');
     path.setAttribute('d',IconList.post);
     svg.appendChild(path);
+    const main=document.createElement('span');
+    main.className='listMain';
     const title=document.createElement('span');
     title.className='listTitle';
     title.textContent=post.postTitle;
-    center.append(svg,title);
+    const excerpt=document.createElement('span');
+    excerpt.className='listExcerpt';
+    excerpt.textContent=post.description || '';
+    main.append(title);
+    if(excerpt.textContent) main.append(excerpt);
+    center.append(svg,main);
 
     const labels=document.createElement('div');
     labels.className='listLabels';
@@ -110,6 +117,7 @@ function createPostItem(post){
     });
     const date=document.createElement('span');
     date.className='Label LabelTime';
+    date.dataset.shortDate=String(post.createdDate || '').slice(5);
     date.style.backgroundColor=post.dateLabelColor;
     date.textContent=post.createdDate;
     labels.appendChild(date);
@@ -130,6 +138,8 @@ function renderIndex(payload){
         const button=document.createElement('button');
         button.className='Label';
         button.type='button';
+        button.dataset.label=label;
+        button.setAttribute('aria-pressed','false');
         button.style.cssText='background-color:'+(searchState.labelColors[label] || '#57606a')+';padding:4px;';
         button.append(document.createTextNode('\u00a0\u00a0'+label+' '));
         const count=document.createElement('span');
@@ -158,7 +168,12 @@ function applyFilter(value,forceSearch=false){
         item.style.display=visible ? 'block' : 'none';
         if(visible) matches++;
     });
-    pageTitle.textContent=(isTag ? 'Tag #' : SEARCH_UI.search+' #')+(value || (isTag ? 'All' : ''));
+    tagContainer.querySelectorAll('button.Label').forEach(button=>{
+        button.setAttribute('aria-pressed',String(isTag && button.dataset.label===label));
+    });
+    pageTitle.textContent=isTag
+        ? (label==='All' ? '全部文章' : '标签：'+label)
+        : SEARCH_UI.search+'：'+(value || '全部文章');
     document.title=(value || SEARCH_UI.search)+' - '+SEARCH_UI.siteTitle;
     setStatus(matches ? '' : SEARCH_UI.noResults+(value ? ' “'+value+'”' : ''),matches===0);
 }

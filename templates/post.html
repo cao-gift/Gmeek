@@ -34,6 +34,7 @@
 #postBody hr{height:2px;}
 .postMeta{display:flex;flex-wrap:wrap;gap:6px 16px;margin:-4px 0 20px;color:var(--fgColor-muted,var(--color-fg-muted));font-size:14px;}
 .postMeta span{white-space:nowrap;}
+.postMeta .postMetaSecondary{color:var(--fgColor-muted,var(--color-fg-muted));}
 .postNavigation{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:32px;}
 .postNavigation a,.relatedPosts a{display:block;padding:12px;border:1px solid var(--borderColor-muted,var(--color-border-muted));border-radius:6px;}
 .postNavigation .nextPost{text-align:right;}
@@ -74,10 +75,10 @@
 {% block content %}
 {% if blogBase['isArticle'] %}
 <div class="postMeta" aria-label="文章元数据">
-    <span>{{ i18n['published'] }} <time datetime="{{ blogBase['datePublished']|e }}">{{ blogBase['createdDate']|e }}</time></span>
-    <span>{{ i18n['updated'] }} <time datetime="{{ blogBase['dateModified']|e }}">{{ blogBase['updatedDate']|e }}</time></span>
-    <span>{{ i18n['author'] }} {{ blogBase['author']|e }}</span>
-    <span>{{ i18n['wordCount'] }} {{ blogBase['wordCount'] }} · {{ i18n['readingTime'] }} {{ blogBase['readingTime'] }} {{ i18n['minRead'] }}</span>
+    <span class="postMetaPrimary">{{ i18n['published'] }} <time datetime="{{ blogBase['datePublished']|e }}">{{ blogBase['createdDate']|e }}</time></span>
+    {% if blogBase['updatedDate'] != blogBase['createdDate'] %}<span class="postMetaSecondary">{{ i18n['updated'] }} <time datetime="{{ blogBase['dateModified']|e }}">{{ blogBase['updatedDate']|e }}</time></span>{% endif %}
+    <span class="postMetaSecondary">{{ i18n['author'] }} {{ blogBase['author']|e }}</span>
+    <span class="postMetaReading">{{ i18n['wordCount'] }} {{ blogBase['wordCount'] }} · {{ i18n['readingTime'] }} {{ blogBase['readingTime'] }} {{ i18n['minRead'] }}</span>
 </div>
 {% endif %}
 <article class="markdown-body" id="postBody">{{ blogBase['postBody'] }}</article>
@@ -95,7 +96,10 @@
 {% endif %}
 {% endif %}
 {% if blogBase['needComment']==1 %}
-<div class="comments" id="comments"></div>
+<section class="comments" id="comments" aria-label="{{ i18n['comments'] }}">
+    <button class="btn twikoo-load-button" id="twikooLoadButton" type="button">加载评论</button>
+    <p class="twikoo-load-status" id="twikooLoadStatus" role="status" aria-live="polite"></p>
+</section>
 {% endif %}
 {% endblock %}
 
@@ -105,23 +109,52 @@
 {% if not blogBase['twikooEnvId'] %}
 console.error("[Gmeek] 未配置 twikooEnvId，评论无法加载");
 {% else %}
-const commentScript=document.createElement("script");
-commentScript.setAttribute("src",{{ blogBase['twikooCDN']|tojson }});
-commentScript.onload=function(){
-    if(!window.twikoo){
-        console.error("[Gmeek] Twikoo 初始化失败");
-        return;
-    }
-    twikoo.init({
-        envId: {{ blogBase['twikooEnvId']|tojson }},
-        el: "#comments",
-        lang: "zh-CN"
-    });
-};
-commentScript.onerror=function(){
-    console.error("[Gmeek] Twikoo 脚本加载失败，请刷新页面重试");
-};
-document.head.appendChild(commentScript);
+const comments=document.getElementById('comments');
+const commentButton=document.getElementById('twikooLoadButton');
+const commentStatus=document.getElementById('twikooLoadStatus');
+let commentLoading=false;
+function loadTwikoo(){
+    if(commentLoading || window.__gmeekTwikooLoaded) return;
+    commentLoading=true;
+    commentButton.disabled=true;
+    commentButton.textContent='正在加载评论…';
+    commentStatus.textContent='';
+    const commentScript=document.createElement('script');
+    commentScript.src={{ blogBase['twikooCDN']|tojson }};
+    commentScript.async=true;
+    commentScript.onload=function(){
+        if(!window.twikoo){
+            commentLoading=false;
+            commentButton.disabled=false;
+            commentButton.textContent='重新加载评论';
+            commentStatus.textContent='评论组件初始化失败，请重试。';
+            return;
+        }
+        window.__gmeekTwikooLoaded=true;
+        commentButton.remove();
+        commentStatus.textContent='';
+        twikoo.init({envId:{{ blogBase['twikooEnvId']|tojson }},el:'#comments',lang:'zh-CN'});
+    };
+    commentScript.onerror=function(){
+        commentLoading=false;
+        commentButton.disabled=false;
+        commentButton.textContent='重新加载评论';
+        commentStatus.textContent='评论加载失败，请检查网络后重试。';
+    };
+    document.head.appendChild(commentScript);
+}
+commentButton.addEventListener('click',loadTwikoo);
+if('IntersectionObserver' in window){
+    const commentObserver=new IntersectionObserver(entries=>{
+        if(entries.some(entry=>entry.isIntersecting)){
+            commentObserver.disconnect();
+            loadTwikoo();
+        }
+    },{rootMargin:'480px 0px'});
+    commentObserver.observe(comments);
+}else{
+    window.addEventListener('load',loadTwikoo,{once:true});
+}
 {% endif %}
 {%- endif %}
 

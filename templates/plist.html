@@ -28,6 +28,8 @@
 .SideNav-item .Label{color: #fff;margin-left:4px;}
 .d-flex{min-width:0;}
 .listTitle{overflow:hidden;white-space:nowrap;text-overflow: ellipsis;max-width: 100%;}
+.listMain{min-width:0;display:grid;gap:4px;}
+.listExcerpt{overflow:hidden;color:var(--fgColor-muted,var(--color-fg-muted));font-size:13px;line-height:1.45;text-overflow:ellipsis;white-space:nowrap;}
 .listLabels{white-space:nowrap;display:flex;}
 .listLabels object{max-height:16px;max-width:24px;}
 
@@ -63,17 +65,20 @@
 <nav class="SideNav border" aria-label="文章列表">
 {% for num in postListJson -%}
 <a class="SideNav-item d-flex flex-items-center flex-justify-between" href="{{ postListJson[num]['postUrl']|e }}">
-    <div class="d-flex flex-items-center">
+    <div class="d-flex flex-items-center listLead">
         <svg class="SideNav-icon octicon" style="width:16px;height:16px"><path class="svgTop{{ postListJson[num]['top'] }}" d=""></path>
         </svg>
-        <span class="listTitle">{{ postListJson[num]['postTitle']|e }}</span>
+        <span class="listMain">
+            <span class="listTitle">{{ postListJson[num]['postTitle']|e }}</span>
+            {% if postListJson[num]['description'] %}<span class="listExcerpt">{{ postListJson[num]['description']|e }}</span>{% endif %}
+        </span>
     </div>
     <div class="listLabels">
         {% if postListJson[num]['commentNum']>0 %}<span class="Label" style="background-color:{{ blogBase['commentLabelColor'] }}">{{ postListJson[num]['commentNum'] }}</span>{% endif %}
         {% for label in postListJson[num]['labels'] -%}
         <span class="Label LabelName" style="background-color:{{ blogBase['labelColorDict'][label] }}">{{ label }}</span>
         {%- endfor %}
-        <span class="Label LabelTime" style="background-color:{{ postListJson[num]['dateLabelColor'] }}">{{ postListJson[num]['createdDate'] }}</span>
+        <span class="Label LabelTime" data-short-date="{{ postListJson[num]['createdDate'][5:]|e }}" style="background-color:{{ postListJson[num]['dateLabelColor'] }}">{{ postListJson[num]['createdDate'] }}</span>
     </div>
 </a>
 {%- endfor %}
