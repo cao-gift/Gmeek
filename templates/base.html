@@ -122,7 +122,8 @@ if('serviceWorker' in navigator){
         };
         try{
             const serviceWorkerUrl=new URL({{ (blogBase['homeUrl'] ~ '/sw.js')|tojson }}).pathname;
-            const registration=await navigator.serviceWorker.register(serviceWorkerUrl);
+            const registration=await navigator.serviceWorker.register(serviceWorkerUrl,{updateViaCache:'none'});
+            registration.update().catch(error=>console.warn('[Gmeek PWA] update check failed',error));
             if(registration.waiting&&navigator.serviceWorker.controller)showUpdate(registration.waiting);
             registration.addEventListener('updatefound',()=>{
                 const installing=registration.installing;

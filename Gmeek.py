@@ -89,6 +89,10 @@ class GMEEK():
         os.mkdir(self.root_dir)
         os.mkdir(self.post_dir)
 
+        self.syncStaticFiles()
+
+    def syncStaticFiles(self):
+        # Incremental builds must publish the same source assets as full builds.
         if os.path.exists(self.static_dir):
             for item in os.listdir(self.static_dir):
                 src = os.path.join(self.static_dir, item)
@@ -97,7 +101,7 @@ class GMEEK():
                     shutil.copy(src, dst)
                     print(f"Copied {item} to docs")
                 elif os.path.isdir(src):
-                    shutil.copytree(src, dst)
+                    shutil.copytree(src, dst, dirs_exist_ok=True)
                     print(f"Copied directory {item} to docs")
         else:
             print("static does not exist")
@@ -876,10 +880,22 @@ class GMEEK():
             manifestFile.write("\n")
 
         assets=self.pwaAssetPaths()
-        versionData={"assets":assets,"manifest":manifest}
+        contentHashes={}
+        for directory, _, filenames in os.walk(self.root_dir):
+            for filename in sorted(filenames):
+                path=os.path.join(directory, filename)
+                relative=os.path.relpath(path, self.root_dir).replace(os.sep, '/')
+                if relative in ("sw.js", "build.json"):
+                    continue
+                digest=hashlib.sha256()
+                with open(path, 'rb') as assetFile:
+                    for chunk in iter(lambda: assetFile.read(1024*1024), b''):
+                        digest.update(chunk)
+                contentHashes[relative]=digest.hexdigest()
+        versionData={"assets":assets,"manifest":manifest,"content":contentHashes}
         cacheVersion=hashlib.sha256(json.dumps(versionData, sort_keys=True).encode("utf-8")).hexdigest()[:12]
         serviceWorker="""const SHELL_CACHE_NAME = {cache_name};
-const RUNTIME_CACHE_NAME = 'gmeek-runtime-v1';
+const RUNTIME_CACHE_NAME = SHELL_CACHE_NAME + '-runtime';
 const CACHE_PREFIX = 'gmeek-';
 const RUNTIME_CACHE_LIMIT = 60;
 const PRECACHE_URLS = {assets};
@@ -937,14 +953,18 @@ self.addEventListener('fetch', event => {{
   const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
   event.respondWith((async () => {{
-    const cached = await caches.match(request);
-    if (request.mode === 'navigate') {{
+    const runtime = await caches.open(RUNTIME_CACHE_NAME);
+    const shell = await caches.open(SHELL_CACHE_NAME);
+    const cached = await runtime.match(request) || await shell.match(request);
+    if (request.mode === 'navigate' || ['script','style'].includes(request.destination) || url.pathname.endsWith('/postList.json')) {{
       try {{
-        const response = await fetch(request);
+        const response = await fetch(request, {{cache: 'no-cache'}});
         if (response.ok) event.waitUntil(putRuntime(request, response.clone()));
         return response;
       }} catch (error) {{
-        return cached || caches.match(HOME_URL);
+        if (cached) return cached;
+        if (request.mode === 'navigate') return await shell.match(HOME_URL) || Response.error();
+        return Response.error();
       }}
     }}
     if (cached) {{
@@ -1092,6 +1112,7 @@ self.addEventListener('fetch', event => {{
 
     def runOne(self,number_str):
         print("====== start create static html ======")
+        self.syncStaticFiles()
         changedPostNum="P"+str(number_str)
         oldRelationshipState=self.postRelationshipState()
         try:
