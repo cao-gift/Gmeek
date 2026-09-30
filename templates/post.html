@@ -144,17 +144,6 @@ function loadTwikoo(){
     document.head.appendChild(commentScript);
 }
 commentButton.addEventListener('click',loadTwikoo);
-if('IntersectionObserver' in window){
-    const commentObserver=new IntersectionObserver(entries=>{
-        if(entries.some(entry=>entry.isIntersecting)){
-            commentObserver.disconnect();
-            loadTwikoo();
-        }
-    },{rootMargin:'480px 0px'});
-    commentObserver.observe(comments);
-}else{
-    window.addEventListener('load',loadTwikoo,{once:true});
-}
 {% endif %}
 {%- endif %}
 

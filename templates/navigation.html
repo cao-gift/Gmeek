@@ -25,9 +25,6 @@
         <svg class="octicon" width="16" height="16" aria-hidden="true"><path data-nav-icon="{{ blogBase['singeListJson'][num]['labels'][0]|e }}" fill-rule="evenodd"></path></svg>
     </a>
     {% endfor %}
-    <a href="{{ blogBase['homeUrl'] }}/rss.xml" target="_blank" rel="noopener noreferrer" id="buttonRSS" class="btn btn-invisible circle" title="RSS" aria-label="RSS">
-        <svg class="octicon" width="16" height="16" aria-hidden="true"><path data-nav-icon="rss" fill-rule="evenodd"></path></svg>
-    </a>
     {% endif %}
     {% if showIssue and blogBase['showPostSource']==1 %}
     <a href="{{ blogBase['postSourceUrl']|e }}" target="_blank" rel="noopener noreferrer" class="btn btn-invisible circle" title="Issue" aria-label="Issue">

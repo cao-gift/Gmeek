@@ -46,7 +46,7 @@
 
 {% block header %}
 <div class="title-left">
-    <img src="{{ blogBase['avatarUrl'] }}" class="avatar circle" id="avatarImg" alt="{{ blogBase['title'] }}">
+    <img src="{{ blogBase['avatarUrl']|e }}" class="avatar circle" id="avatarImg" alt="{{ blogBase['title']|e }}" width="150" height="150" loading="eager" decoding="async" fetchpriority="high">
     <h1 class="siteTitle">
     {%- if blogBase['displayTitle']=='Meekdai' -%}
     <a class="blogTitle" href="https://meekdai.com"><span style="font-size:0;">M</span>eekdai</a>

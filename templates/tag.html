@@ -35,11 +35,11 @@
 {% endblock %}
 
 {% block header %}
-<h1 class="tagTitle"><span>Loading</span><span class="AnimatedEllipsis"></span></h1>
+<h1 class="tagTitle"><span>{{ i18n['loading'] }}</span></h1>
 <div class="title-right">
     <form class="subnav-search" role="search" onsubmit="event.preventDefault();searchShow();">
         <label class="sr-only" for="siteSearch">{{ i18n['Search'] }}</label>
-        <input id="siteSearch" name="q" type="search" class="form-control subnav-search-input" aria-label="{{ i18n['Search'] }}" placeholder="{% if blogBase['i18n']=='CN' %}搜索文章标题或标签{% else %}{{ i18n['Search'] }}{% endif %}" autocomplete="off" value="">
+        <input id="siteSearch" name="q" type="search" class="form-control subnav-search-input" aria-label="{{ i18n['Search'] }}" placeholder="{% if blogBase['i18n']=='CN' %}搜索标题、摘要或标签…{% else %}{{ i18n['Search'] }}{% endif %}" autocomplete="off" value="">
         <button class="btn search-submit" type="submit">{{ i18n['Search'] }}</button>
         <svg class="subnav-search-icon octicon octicon-search" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
             <path data-nav-icon="search" fill-rule="evenodd"></path>
@@ -140,8 +140,8 @@ function renderIndex(payload){
         button.type='button';
         button.dataset.label=label;
         button.setAttribute('aria-pressed','false');
-        button.style.cssText='background-color:'+(searchState.labelColors[label] || '#57606a')+';padding:4px;';
-        button.append(document.createTextNode('\u00a0\u00a0'+label+' '));
+        button.style.setProperty('--tag-color',searchState.labelColors[label] || '#57606a');
+        button.append(document.createTextNode((label==='All' ? '全部' : label)+' '));
         const count=document.createElement('span');
         count.className='Counter';
         count.textContent=counts[label];
@@ -174,7 +174,7 @@ function applyFilter(value,forceSearch=false){
     pageTitle.textContent=isTag
         ? (label==='All' ? '全部文章' : '标签：'+label)
         : SEARCH_UI.search+'：'+(value || '全部文章');
-    document.title=(value || SEARCH_UI.search)+' - '+SEARCH_UI.siteTitle;
+    document.title=(isTag && label==='All' ? '全部文章' : (value || SEARCH_UI.search))+' - '+SEARCH_UI.siteTitle;
     setStatus(matches ? '' : SEARCH_UI.noResults+(value ? ' “'+value+'”' : ''),matches===0);
 }
 

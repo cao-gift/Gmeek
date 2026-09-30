@@ -25,9 +25,9 @@ from jinja2 import Environment, FileSystemLoader
 from transliterate import translit
 from collections import OrderedDict
 ######################################################################################
-i18n={"Search":"Search","switchTheme":"switch theme","home":"home","comments":"comments","run":"run ","days":" day(s)","Previous":"Previous","Next":"Next","Archive":"Archive","published":"Published","updated":"Updated","author":"Author","wordCount":"Words","readingTime":"Reading time","minRead":"min read","related":"Related posts","previousPost":"Previous post","nextPost":"Next post","loading":"Loading","loadFailed":"Search data failed to load","noResults":"No matching posts","pwaUpdateAvailable":"A new site version is ready.","pwaUpdateNow":"Update now","pwaClearCache":"Clear cache and update","pwaLater":"Later"}
-i18nCN={"Search":"搜索","switchTheme":"切换主题","home":"首页","comments":"评论","run":"网站运行 ","days":" 天","Previous":"上一页","Next":"下一页","Archive":"归档","published":"发布于","updated":"更新于","author":"作者","wordCount":"字数","readingTime":"阅读时长","minRead":"分钟","related":"相关文章","previousPost":"上一篇","nextPost":"下一篇","loading":"正在加载文章索引…","loadFailed":"文章索引加载失败，请稍后重试。","noResults":"没有找到匹配的文章","pwaUpdateAvailable":"站点有新版本可用。","pwaUpdateNow":"立即更新","pwaClearCache":"清除缓存并更新","pwaLater":"稍后"}
-i18nRU={"Search":"Поиск","switchTheme": "Сменить тему","home":"Главная","comments":"Комментарии ","run":" работает ","days":" дней","Previous":"Предыдущая","Next":"Следующая","Archive":"Архив","published":"Опубликовано","updated":"Обновлено","author":"Автор","wordCount":"Слов","readingTime":"Время чтения","minRead":"мин","related":"Похожие записи","previousPost":"Предыдущая запись","nextPost":"Следующая запись","loading":"Загрузка…","loadFailed":"Не удалось загрузить поиск","noResults":"Ничего не найдено","pwaUpdateAvailable":"Доступна новая версия сайта.","pwaUpdateNow":"Обновить","pwaClearCache":"Очистить кэш и обновить","pwaLater":"Позже"}
+i18n={"Search":"Search","switchTheme":"switch theme","home":"home","comments":"comments","run":"run ","days":" day(s)","Previous":"Previous","Next":"Next","Archive":"Archive","published":"Published","updated":"Updated","author":"Author","wordCount":"Words","readingTime":"Reading time","minRead":"min read","related":"Related posts","previousPost":"Previous post","nextPost":"Next post","loading":"Loading","loadFailed":"Search data failed to load","noResults":"No matching posts","rssSubscribe":"RSS subscription","skipToContent":"Skip to content","pwaUpdateAvailable":"A new site version is ready.","pwaUpdateNow":"Update now","pwaClearCache":"Clear cache and update","pwaLater":"Later"}
+i18nCN={"Search":"搜索","switchTheme":"切换主题","home":"首页","comments":"评论","run":"网站运行 ","days":" 天","Previous":"上一页","Next":"下一页","Archive":"归档","published":"发布于","updated":"更新于","author":"作者","wordCount":"字数","readingTime":"阅读时长","minRead":"分钟","related":"相关文章","previousPost":"上一篇","nextPost":"下一篇","loading":"正在加载文章索引…","loadFailed":"文章索引加载失败，请稍后重试。","noResults":"没有找到匹配的文章","rssSubscribe":"RSS 订阅","skipToContent":"跳转到正文","pwaUpdateAvailable":"站点有新版本可用。","pwaUpdateNow":"立即更新","pwaClearCache":"清除缓存并更新","pwaLater":"稍后"}
+i18nRU={"Search":"Поиск","switchTheme": "Сменить тему","home":"Главная","comments":"Комментарии ","run":" работает ","days":" дней","Previous":"Предыдущая","Next":"Следующая","Archive":"Архив","published":"Опубликовано","updated":"Обновлено","author":"Автор","wordCount":"Слов","readingTime":"Время чтения","minRead":"мин","related":"Похожие записи","previousPost":"Предыдущая запись","nextPost":"Следующая запись","loading":"Загрузка…","loadFailed":"Не удалось загрузить поиск","noResults":"Ничего не найдено","rssSubscribe":"RSS-подписка","skipToContent":"Перейти к содержимому","pwaUpdateAvailable":"Доступна новая версия сайта.","pwaUpdateNow":"Обновить","pwaClearCache":"Очистить кэш и обновить","pwaLater":"Позже"}
 IconBase={
     "post":"M0 3.75C0 2.784.784 2 1.75 2h12.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 14.25 14H1.75A1.75 1.75 0 0 1 0 12.25Zm1.75-.25a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25v-8.5a.25.25 0 0 0-.25-.25ZM3.5 6.25a.75.75 0 0 1 .75-.75h7a.75.75 0 0 1 0 1.5h-7a.75.75 0 0 1-.75-.75Zm.75 2.25h4a.75.75 0 0 1 0 1.5h-4a.75.75 0 0 1 0-1.5Z",
     "link":"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z",
@@ -293,6 +293,27 @@ class GMEEK():
             return output
         except requests.RequestException as e:
             raise Exception("markdown2html error: {}".format(e))
+
+    def normalizePostHeadingLevels(self, postBody):
+        """Keep the page title as the only h1 and prevent skipped body levels."""
+        previousLevel=1
+        headingStack=[]
+        headingPattern=re.compile(r'<\s*(/?)\s*h([1-6])(\b[^>]*)>', re.IGNORECASE)
+
+        def replaceHeading(match):
+            nonlocal previousLevel
+            isClosing=match.group(1)=="/"
+            originalLevel=int(match.group(2))
+            if isClosing:
+                targetLevel=headingStack.pop() if headingStack else max(2, originalLevel)
+                return "</h{}>".format(targetLevel)
+
+            targetLevel=max(2, min(originalLevel, previousLevel+1))
+            previousLevel=targetLevel
+            headingStack.append(targetLevel)
+            return "<h{}{}>".format(targetLevel, match.group(3))
+
+        return headingPattern.sub(replaceHeading, postBody)
 
     def imageDimensionsFromBytes(self, data):
         if len(data)>=24 and data.startswith(b"\x89PNG\r\n\x1a\n"):
@@ -610,6 +631,7 @@ class GMEEK():
         if '<code class="notranslate">Gmeek-html' in post_body:
             post_body = re.sub(r'<code class="notranslate">Gmeek-html(.*?)</code>', lambda match: html.unescape(match.group(1)), post_body, flags=re.DOTALL)
 
+        post_body=self.normalizePostHeadingLevels(post_body)
         post_body=self.optimizePostImages(post_body)
         isSinglePage=issue.get("isSinglePage", False)
         postBase["isArticle"]=not isSinglePage
@@ -656,13 +678,13 @@ class GMEEK():
             postBase["bottomText"]=''
 
         if '<pre class="notranslate">' in post_body:
-            keys=['sun','moon','sync','home','search','github','copy','check','link']
+            keys=['sun','moon','sync','home','search','github','copy','check','link','rss']
             if '<div class="highlight' in post_body:
                 postBase["highlight"]=1
             else:
                 postBase["highlight"]=2
         else:
-            keys=['sun','moon','sync','home','search','github','link']
+            keys=['sun','moon','sync','home','search','github','link','rss']
             postBase["highlight"]=0
 
         if self.blogBase.get("archivePage", 1)==1:
@@ -679,7 +701,7 @@ class GMEEK():
                 os.remove(os.path.join(self.root_dir, fileName))
         keys=list(OrderedDict.fromkeys(['sun', 'moon','sync', 'home', 'search', 'rss', 'upload', 'post', 'archive', 'link'] + self.blogBase["singlePage"]))
         plistIcon={**dict(zip(keys, map(IconBase.get, keys))),**self.blogBase["iconList"]}
-        keys=['sun','moon','sync','home','search','post','archive','link']
+        keys=['sun','moon','sync','home','search','post','archive','link','rss']
         tagIcon=dict(zip(keys, map(IconBase.get, keys)))
         self.blogBase["robots"]="noindex,nofollow" if self.blogBase.get("previewMode") else "index,follow"
 
