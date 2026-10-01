@@ -1,8 +1,10 @@
 {% macro site_navigation(currentPage='', showExtras=false, showIssue=false) -%}
 <nav class="site-navigation" aria-label="站点导航">
+    {% if currentPage!='home' %}
     <a href="{{ blogBase['homeUrl'] }}" id="buttonHome" class="btn btn-invisible circle{% if currentPage=='home' %} is-current{% endif %}" title="{{ i18n['home'] }}" aria-label="{{ i18n['home'] }}"{% if currentPage=='home' %} aria-current="page"{% endif %}>
         <svg class="octicon" width="16" height="16" aria-hidden="true"><path data-nav-icon="home" fill-rule="evenodd"></path></svg>
     </a>
+    {% endif %}
     <a href="{{ blogBase['homeUrl'] }}/tag.html" id="buttonSearch" class="btn btn-invisible circle{% if currentPage=='search' %} is-current{% endif %}" title="{{ i18n['Search'] }}" aria-label="{{ i18n['Search'] }}"{% if currentPage=='search' %} aria-current="page"{% endif %}>
         <svg class="octicon" width="16" height="16" aria-hidden="true"><path data-nav-icon="search" fill-rule="evenodd"></path></svg>
     </a>
@@ -11,9 +13,6 @@
         <svg class="octicon" width="16" height="16" aria-hidden="true"><path data-nav-icon="archive" fill-rule="evenodd"></path></svg>
     </a>
     {% endif %}
-    <button class="btn btn-invisible circle" type="button" onclick="modeSwitch()" title="{{ i18n['switchTheme'] }}" aria-label="{{ i18n['switchTheme'] }}"{% if blogBase['themeMode']=='fix' %} style="display:none;"{% endif %}>
-        <svg class="octicon" width="16" height="16" aria-hidden="true"><path id="themeSwitch" data-nav-icon="sync" fill-rule="evenodd"></path></svg>
-    </button>
     {% if showExtras %}
     {% for key, value in blogBase['exlink'].items() %}
     <a href="{{ value|e }}" class="btn btn-invisible circle" title="{{ key|e }}" aria-label="{{ key|e }}" target="_blank" rel="noopener noreferrer">
