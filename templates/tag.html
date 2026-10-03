@@ -37,7 +37,7 @@
 {% block header %}
 <h1 class="tagTitle"><span>{{ i18n['loading'] }}</span></h1>
 <div class="title-right">
-    <form class="subnav-search" role="search" onsubmit="event.preventDefault();searchShow();">
+    <form class="subnav-search" role="search">
         <label class="sr-only" for="siteSearch">{{ i18n['Search'] }}</label>
         <input id="siteSearch" name="q" type="search" class="form-control subnav-search-input" aria-label="{{ i18n['Search'] }}" placeholder="{% if blogBase['i18n']=='CN' %}搜索标题、摘要或标签…{% else %}{{ i18n['Search'] }}{% endif %}" autocomplete="off" value="">
         <button class="btn search-submit" type="submit">{{ i18n['Search'] }}</button>
@@ -192,6 +192,12 @@ function searchShow(){
 
 window.updateShowTag=updateShowTag;
 window.searchShow=searchShow;
+
+const searchForm=document.querySelector('.subnav-search');
+if(searchForm) searchForm.addEventListener('submit',event=>{
+    event.preventDefault();
+    searchShow();
+});
 
 fetch('postList.json',{headers:{Accept:'application/json'}})
     .then(response=>{

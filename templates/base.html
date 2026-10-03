@@ -21,18 +21,17 @@
     </script>
     {%- endif -%}
     {% block head %}{% endblock %}
+    <style>
+    body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;padding: 45px;font-size: 16px;font-family: sans-serif;line-height: 1.25;}
+    #header{display:flex;padding-bottom:8px;border-bottom: 1px solid var(--borderColor-muted, var(--color-border-muted));margin-bottom: 16px;}
+    #footer {margin-top:64px; text-align: center;font-size: small;}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+    .site-navigation{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;}
+    .site-navigation>.circle{margin:0;}
+    .site-navigation>[aria-current="page"]{box-shadow:inset 0 0 0 2px currentColor;}
+    </style>
+    {% block style %}{% endblock %}
 </head>
-<style>
-body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;padding: 45px;font-size: 16px;font-family: sans-serif;line-height: 1.25;}
-#header{display:flex;padding-bottom:8px;border-bottom: 1px solid var(--borderColor-muted, var(--color-border-muted));margin-bottom: 16px;}
-#footer {margin-top:64px; text-align: center;font-size: small;}
-.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
-.site-navigation{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;}
-.site-navigation>.circle{margin:0;}
-.site-navigation>[aria-current="page"]{box-shadow:inset 0 0 0 2px currentColor;}
-
-</style>
-{% block style %}{% endblock %}
 
 <body>
     <a class="skip-link" href="#content">{{ i18n['skipToContent'] }}</a>
@@ -42,7 +41,6 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
         <main id="content">{% block content %}{% endblock %}</main>
         <footer id="footer">{% include 'footer.html' %}</footer>
     </div>
-</body>
 <script>
 var IconList={{ IconList }};
 document.querySelectorAll('[data-nav-icon]').forEach(function(path){
@@ -153,5 +151,6 @@ if('serviceWorker' in navigator){
 {% endif %}
 </script>
 {% block script %}{% endblock %}
+</body>
 </html>
 
