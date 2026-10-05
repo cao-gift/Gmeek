@@ -60,6 +60,7 @@
 const SEARCH_UI={
     search:{{ i18n['Search']|tojson }},
     noResults:{{ i18n['noResults']|tojson }},
+    resultCount:{{ i18n['resultCount']|tojson }},
     loadFailed:{{ i18n['loadFailed']|tojson }},
     siteTitle:{{ blogBase['title']|tojson }}
 };
@@ -175,19 +176,37 @@ function applyFilter(value,forceSearch=false){
         ? (label==='All' ? '全部文章' : '标签：'+label)
         : SEARCH_UI.search+'：'+(value || '全部文章');
     document.title=(isTag && label==='All' ? '全部文章' : (value || SEARCH_UI.search))+' - '+SEARCH_UI.siteTitle;
-    setStatus(matches ? '' : SEARCH_UI.noResults+(value ? ' “'+value+'”' : ''),matches===0);
+    setStatus(matches
+        ? SEARCH_UI.resultCount.replace('{count}',String(matches))
+        : SEARCH_UI.noResults+(value ? ' “'+value+'”' : ''));
 }
 
 function updateShowTag(label){
-    searchInput.value='';
-    window.location.hash=encodeURIComponent(label);
-    applyFilter(label);
+    setLocationState(label || 'All');
 }
 
 function searchShow(){
     const query=searchInput.value.trim();
-    window.location.hash=encodeURIComponent(query);
-    applyFilter(query,true);
+    setLocationState(query || 'All');
+}
+
+function readLocationState(){
+    try{return decodeURIComponent(window.location.hash.slice(1)) || 'All';}
+    catch(error){return 'All';}
+}
+
+function applyLocationState(){
+    if(!searchState.ready)return;
+    const value=readLocationState();
+    const isTag=searchState.labels.has(value);
+    searchInput.value=isTag ? '' : value;
+    applyFilter(value,!isTag);
+}
+
+function setLocationState(value){
+    const nextHash='#'+encodeURIComponent(value || 'All');
+    if(window.location.hash===nextHash)applyLocationState();
+    else window.location.hash=nextHash;
 }
 
 window.updateShowTag=updateShowTag;
@@ -198,6 +217,7 @@ if(searchForm) searchForm.addEventListener('submit',event=>{
     event.preventDefault();
     searchShow();
 });
+window.addEventListener('hashchange',applyLocationState);
 
 fetch('postList.json',{headers:{Accept:'application/json'}})
     .then(response=>{
@@ -206,13 +226,7 @@ fetch('postList.json',{headers:{Accept:'application/json'}})
     })
     .then(payload=>{
         renderIndex(payload);
-        let initial='All';
-        try{initial=decodeURIComponent(window.location.hash.slice(1)) || 'All';}catch(error){initial='All';}
-        if(searchState.labels.has(initial)) applyFilter(initial);
-        else{
-            searchInput.value=initial;
-            applyFilter(initial,true);
-        }
+        applyLocationState();
     })
     .catch(error=>{
         console.error('[Gmeek search]',error);

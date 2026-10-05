@@ -56,13 +56,15 @@ let themeSettings={
 function changeTheme(mode, icon, color, utheme){
     document.documentElement.setAttribute("data-color-mode",mode);
     const themeSwitch=document.getElementById("themeSwitch");
-    themeSwitch.setAttribute("d",IconList[icon]);
-    themeSwitch.parentNode.style.color=color;
-    const themeControl=themeSwitch.closest("button, a");
-    const modeNames={dark:"深色",light:"浅色",auto:"跟随系统"};
-    if(themeControl){
-        themeControl.setAttribute("aria-label","切换主题，当前："+modeNames[mode]);
-        themeControl.setAttribute("title","切换主题，当前："+modeNames[mode]);
+    if(themeSwitch){
+        themeSwitch.setAttribute("d",IconList[icon]);
+        if(themeSwitch.parentNode)themeSwitch.parentNode.style.color=color;
+        const themeControl=themeSwitch.closest("button, a");
+        const modeNames={dark:"深色",light:"浅色",auto:"跟随系统"};
+        if(themeControl){
+            themeControl.setAttribute("aria-label","切换主题，当前："+modeNames[mode]);
+            themeControl.setAttribute("title","切换主题，当前："+modeNames[mode]);
+        }
     }
     const themeColor=document.querySelector('meta[name="theme-color"]');
     if(themeColor){
@@ -80,9 +82,12 @@ function modeSwitch(){
 }
 if(themeSettings[theme]){changeTheme(...themeSettings[theme]);}
 if(window.matchMedia){
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{
+    const colorSchemeQuery=window.matchMedia('(prefers-color-scheme: dark)');
+    const handleColorSchemeChange=()=>{
         if(document.documentElement.getAttribute('data-color-mode')==='auto')changeTheme(...themeSettings.auto);
-    });
+    };
+    if(colorSchemeQuery.addEventListener)colorSchemeQuery.addEventListener('change',handleColorSchemeChange);
+    else if(colorSchemeQuery.addListener)colorSchemeQuery.addListener(handleColorSchemeChange);
 }
 {%- endif %}
 console.log("\n %c Gmeek {{ blogBase['GMEEK_VERSION'] }} https://github.com/Meekdai/Gmeek \n","padding:5px 0;background:#02d81d;color:#fff");

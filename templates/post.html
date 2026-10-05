@@ -37,6 +37,9 @@
 .postMeta .postMetaSecondary{color:var(--fgColor-muted,var(--color-fg-muted));}
 .postNavigation{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:32px;}
 .postNavigation a,.relatedPosts a{display:block;padding:12px;border:1px solid var(--borderColor-muted,var(--color-border-muted));border-radius:6px;}
+.postNavigation a{display:flex;min-height:68px;flex-direction:column;justify-content:center;gap:5px;}
+.postNavigationLabel{color:var(--fgColor-muted,var(--color-fg-muted));font-size:12px;font-weight:600;}
+.postNavigationTitle{overflow-wrap:anywhere;font-weight:650;line-height:1.45;}
 .postNavigation .nextPost{text-align:right;}
 .relatedPosts{margin-top:32px;}
 .relatedPosts h2{font-size:20px;margin-bottom:12px;}
@@ -85,8 +88,8 @@
 <div style="font-size:small;margin-top:8px;float:right;">{{ blogBase['bottomText'] }}</div>
 {% if blogBase['isArticle'] %}
 <nav class="postNavigation" aria-label="文章导航">
-    <div>{% if blogBase['previousPost'] %}<a class="previousPost" rel="prev" href="{{ blogBase['homeUrl'] }}/{{ blogBase['previousPost']['postUrl']|e }}"><small>{{ i18n['previousPost'] }}</small><br>{{ blogBase['previousPost']['postTitle']|e }}</a>{% endif %}</div>
-    <div>{% if blogBase['nextPost'] %}<a class="nextPost" rel="next" href="{{ blogBase['homeUrl'] }}/{{ blogBase['nextPost']['postUrl']|e }}"><small>{{ i18n['nextPost'] }}</small><br>{{ blogBase['nextPost']['postTitle']|e }}</a>{% endif %}</div>
+    <div>{% if blogBase['previousPost'] %}<a class="previousPost" rel="prev" href="{{ blogBase['homeUrl'] }}/{{ blogBase['previousPost']['postUrl']|e }}"><span class="postNavigationLabel">{{ i18n['previousPost'] }}</span><span class="postNavigationTitle">{{ blogBase['previousPost']['postTitle']|e }}</span></a>{% endif %}</div>
+    <div>{% if blogBase['nextPost'] %}<a class="nextPost" rel="next" href="{{ blogBase['homeUrl'] }}/{{ blogBase['nextPost']['postUrl']|e }}"><span class="postNavigationLabel">{{ i18n['nextPost'] }}</span><span class="postNavigationTitle">{{ blogBase['nextPost']['postTitle']|e }}</span></a>{% endif %}</div>
 </nav>
 {% if blogBase['relatedPosts'] %}
 <aside class="relatedPosts" aria-labelledby="relatedPostsTitle">
